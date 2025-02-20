@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <stdio.h>
 #include <stdlib.h>
 #include <cstring>
 #include <cstring>
@@ -187,21 +186,13 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
             z3 = radius * cos(i * slices_angle) * cos(M_PI_2 - stacks_angle * (j + 1));
             z4 = radius * cos((i + 1) * slices_angle) * cos(M_PI_2 - stacks_angle * (j + 1));
 
-            // glBegin(GL_TRIANGLES);
-            //  glVertex3f(x1, y1, z1)
             file << x1 << " " << y1 << " " << z1 << "\n";
-            // glVertex3f(x3,y2,z3)
             file << x3 << " " << y2 << " " << z3 << "\n";
-            // glVertex3f(x4,y2,z4)
             file << x4 << " " << y2 << " " << z4 << "\n";
 
-            // glVertex3f(x1,y1,z1)
             file << x1 << " " << y1 << " " << z1 << "\n";
-            // glVertex3f(x4,y2,z4)
             file << x4 << " " << y2 << " " << z4 << "\n";
-            // glVertex3f(x2,y1,z2)
             file << x2 << " " << y1 << " " << z2 << "\n";
-            // glEnd();
             
         }
     }
@@ -215,15 +206,24 @@ int main(int argc, char **argv)
     {
         float length = std::stof(argv[2]);
         int divisions = std::stoi(argv[3]);
-        generate_box(length, divisions, argv[4]);
+        
+        if(length <= 0 || divisions <= 0){
+            std::cout << "Length and divisions must be greater than 0!" << std::endl;
+        }else{
+            generate_box(length, divisions, argv[4]);
+        }
     }
     else if (strcmp(argv[1], "sphere") == 0 && argc == 6)
     {
         float radius = std::stof(argv[2]);
         int slices = std::stoi(argv[3]);
         int stacks = std::stoi(argv[4]);
-        // g++ generator.cpp -o generator && ./generator sphere 1 5 1 sphere.3d
-        generate_sphere(radius, slices, stacks, argv[5]);
+
+        if(radius <= 0 || slices <= 0 || stacks <= 0) {
+            std::cout << "Radius, slices and stacks must be greater than 0!" << std::endl;
+        }else{
+            generate_sphere(radius, slices, stacks, argv[5]);
+        }
     }
     else if (strcmp(argv[1], "cone") == 0 && argc == 7)
     {
@@ -232,7 +232,14 @@ int main(int argc, char **argv)
     {
         float length = std::stof(argv[2]);
         int divisions = std::stoi(argv[3]);
-        generate_plane(length, divisions, argv[4]);
+        
+        if(length <= 0 || divisions <= 0){
+            std::cout << "Length and divisions must be greater than 0!" << std::endl;
+        }else{
+            generate_plane(length, divisions, argv[4]);
+        }
+    }else{
+        std::cout << "Something went wrong" << std::endl;
     }
 
     return 0;
