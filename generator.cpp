@@ -202,9 +202,10 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
             // glVertex3f(x2,y1,z2)
             file << x2 << " " << y1 << " " << z2 << "\n";
             // glEnd();
-            file.close();
+            
         }
     }
+    file.close();
 }
 
 int main(int argc, char **argv)
@@ -221,6 +222,7 @@ int main(int argc, char **argv)
         float radius = std::stof(argv[2]);
         int slices = std::stoi(argv[3]);
         int stacks = std::stoi(argv[4]);
+        // g++ generator.cpp -o generator && ./generator sphere 1 5 1 sphere.3d
         generate_sphere(radius, slices, stacks, argv[5]);
     }
     else if (strcmp(argv[1], "cone") == 0 && argc == 7)
