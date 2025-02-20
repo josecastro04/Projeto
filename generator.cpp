@@ -2,7 +2,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <cstring>
+#include <cstring>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -209,7 +210,7 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
 int main(int argc, char **argv)
 {
 
-    if (strcmp(argv[1], "box") == 0 && argc == 5)
+    if (std::strcmp(argv[1], "box") == 0 && argc == 5)
     {
         float length = std::stof(argv[2]);
         int divisions = std::stoi(argv[3]);
