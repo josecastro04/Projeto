@@ -1,0 +1,10 @@
+#Ignore any file without an extension
+generator
+
+
+#Ignore files with an extension
+*.out
+*.3d
+
+
+xml_syntax.xml
