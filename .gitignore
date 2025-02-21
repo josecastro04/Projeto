@@ -6,5 +6,6 @@ generator
 *.out
 *.3d
 
+build/
 
 xml_syntax.xml
