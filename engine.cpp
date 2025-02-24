@@ -13,29 +13,35 @@
 #include <GL/glut.h>
 #endif
 
-struct Point{
+struct Point
+{
     float x, y, z;
 };
 
-struct Window{
+struct Window
+{
     int width;
     int height;
 };
 
-struct Models{
+struct Models
+{
     std::list<std::string> model;
 };
 
-struct Camera{
+struct Camera
+{
     Point position;
     Point lookAt;
     Point up;
-    struct{
+    struct
+    {
         float fov, near, far;
-    }projection;
+    } projection;
 };
 
-struct World{
+struct World
+{
     Window window;
     Camera camera;
     Models models;
@@ -43,41 +49,46 @@ struct World{
 
 World world;
 
-void drawAxis(){
+void drawAxis()
+{
     glBegin(GL_LINES);
 
-        glColor3f(0.0f, 1.0f, 0.0f);
-        glVertex3f(0.0f, -50.0f, 0.0f);
-        glVertex3f(0.0f, 150.0f, 0.0f);
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, -50.0f, 0.0f);
+    glVertex3f(0.0f, 150.0f, 0.0f);
 
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glVertex3f(-50.0f, 0.0f, 0.0f);
-        glVertex3f(150.0f, 0.0f, 0.0f);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-50.0f, 0.0f, 0.0f);
+    glVertex3f(150.0f, 0.0f, 0.0f);
 
-        glColor3f(0.0f, 0.0f, 1.0f);
-        glVertex3f(0.0f, 0.0f, -50.0f);
-        glVertex3f(0.0f, 0.0f, 150.0f);
-        
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, -50.0f);
+    glVertex3f(0.0f, 0.0f, 150.0f);
+
     glEnd();
 }
 
-void drawFigure(std::string filename){
+void drawFigure(std::string filename)
+{
     std::ifstream file(filename);
-    if(!file){
+    if (!file)
+    {
         std::cerr << "Error when trying to open the file!" << std::endl;
         return;
     }
 
     glBegin(GL_TRIANGLES);
-        glColor3f(1.0f, 1.0f, 1.0f);
+    glColor3f(1.0f, 1.0f, 1.0f);
     std::string line;
     std::getline(file, line);
-    while( std::getline(file, line) ){
+    while (std::getline(file, line))
+    {
         std::istringstream stream(line);
 
         float x, y, z;
 
-        if(!(stream >> x >> y >> z)){
+        if (!(stream >> x >> y >> z))
+        {
             std::cerr << "Error when trying to read the values!" << std::endl;
             glEnd();
             file.close();
@@ -89,14 +100,14 @@ void drawFigure(std::string filename){
 
     glEnd();
     file.close();
-
 }
 
-void changeSize(int w, int h){
-    if(h == 0)
+void changeSize(int w, int h)
+{
+    if (h == 0)
         h = 1;
 
-    float ratio = w * 1.0 /h;
+    float ratio = w * 1.0 / h;
 
     glMatrixMode(GL_PROJECTION);
 
@@ -109,45 +120,50 @@ void changeSize(int w, int h){
     glMatrixMode(GL_MODELVIEW);
 }
 
-void renderScene(void){
-    
+void renderScene(void)
+{
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //camera
+    // camera
     glLoadIdentity();
     gluLookAt(world.camera.position.x, world.camera.position.y, world.camera.position.z,
-            world.camera.lookAt.x, world.camera.lookAt.y, world.camera.lookAt.z,
-            world.camera.up.x, world.camera.up.y, world.camera.up.z);
-    
+              world.camera.lookAt.x, world.camera.lookAt.y, world.camera.lookAt.z,
+              world.camera.up.x, world.camera.up.y, world.camera.up.z);
+
     glPolygonMode(GL_FRONT, GL_LINE);
-    //desenhar models
+    // desenhar models
     drawAxis();
 
-    for(std::string filename : world.models.model){
+    for (std::string filename : world.models.model)
+    {
         drawFigure(filename);
     }
     glutSwapBuffers();
-    
 }
 
-void parseInfo(char *filename){
+void parseInfo(char *filename)
+{
     using namespace tinyxml2;
     XMLDocument doc;
     XMLError eResult = doc.LoadFile(filename);
 
-    if(eResult != XML_SUCCESS){
+    if (eResult != XML_SUCCESS)
+    {
         std::cout << "Error: " << eResult << std::endl;
         exit(0);
     }
 
     XMLNode *pRoot = doc.FirstChild();
-    if(pRoot == nullptr){
+    if (pRoot == nullptr)
+    {
         std::cout << "Error: " << XML_ERROR_FILE_READ_ERROR << std::endl;
         exit(0);
     }
- 
+
     XMLElement *pElement = pRoot->FirstChildElement("window");
-    if(pElement == nullptr){
+    if (pElement == nullptr)
+    {
         std::cout << "Error: " << XML_ERROR_FILE_READ_ERROR << std::endl;
         exit(0);
     }
@@ -174,26 +190,28 @@ void parseInfo(char *filename){
     cameraElements = pElement->FirstChildElement("projection");
     cameraElements->QueryFloatAttribute("fov", &world.camera.projection.fov);
     cameraElements->QueryFloatAttribute("near", &world.camera.projection.near);
-    cameraElements->QueryFloatAttribute("far", &world.camera.projection.far); 
+    cameraElements->QueryFloatAttribute("far", &world.camera.projection.far);
 
     pElement = pRoot->FirstChildElement("group");
     XMLElement *modelsElements = pElement->FirstChildElement("models");
     XMLElement *listModelElements = modelsElements->FirstChildElement("model");
 
-    while(listModelElements != nullptr){
+    while (listModelElements != nullptr)
+    {
         const char *model_filename = nullptr;
 
         model_filename = listModelElements->Attribute("file");
 
-       
         std::string model = model_filename;
         world.models.model.push_back(model);
         listModelElements = listModelElements->NextSiblingElement("model");
     }
 }
 
-int main(int argc, char **argv){ 
-    if(argc < 2){
+int main(int argc, char **argv)
+{
+    if (argc < 2)
+    {
         std::cout << "Someting went wrong!" << std::endl;
         return 0;
     }
@@ -214,5 +232,4 @@ int main(int argc, char **argv){
     glutMainLoop();
 
     return 1;
-
 }

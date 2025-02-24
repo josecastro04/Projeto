@@ -2,7 +2,6 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cstring>
-#include <cstring>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -168,6 +167,8 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
         std::cerr << "Error when trying to open the file!" << std::endl;
         exit(0);
     }
+
+    file << slices * stacks * 6 << "\n";
 
     for (int i = 0; i < slices; i++)
     {
