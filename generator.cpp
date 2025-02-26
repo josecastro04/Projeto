@@ -5,7 +5,15 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+std::ofstream open_file(char *filename){
+    std::ofstream file(filename);
+    if(!file){
+         std::cerr << "Error when trying to open the file" << std::endl;
+        exit(0);
+    }
 
+    return file;
+}
 void write_points_plane(std::ofstream &file, int points, int points_per_row, float coordinates[][3], int divisions)
 {
     for (int i = 0; i < points - points_per_row; i++)
@@ -68,22 +76,15 @@ void generate_plane(float length, int divisions, char *filename)
 {
     int total_points = (divisions * divisions) * 6;
     int points_per_row = divisions + 1;
-    std::ofstream file(filename);
-    if (!file)
-    {
-        std::cerr << "Error when trying to open the file" << std::endl;
-        exit(0);
-    }
-
-    float start = -length / 2;
     float distance = length / divisions;
+    float start = - length / 2;
+    std::ofstream file = open_file(filename);
 
     file << total_points << "\n";
     int points = points_per_row * points_per_row;
     float coordinates[points][3];
 
     generate_points_plane(coordinates, start, 0, points, divisions, distance);
-
     write_points_plane(file, points, points_per_row, coordinates, divisions);
 
     file.close();
@@ -108,12 +109,7 @@ void generate_box(float length, int divisions, char *filename)
     int total_points = (divisions * divisions) * 36;
     int points_per_row = divisions + 1;
 
-    std::ofstream file(filename);
-    if (!file)
-    {
-        std::cerr << "Error when trying to open the file!" << std::endl;
-        exit(0);
-    }
+    std::ofstream file = open_file(filename);
 
     file << total_points << "\n";
 
@@ -128,27 +124,25 @@ void generate_box(float length, int divisions, char *filename)
     generate_points_plane(coordinates, start, -start, points, divisions, distance);
     write_points_plane(file, points, points_per_row, coordinates, divisions);
 
-    for (int i = 1; i < 4; i++)
-    {
-        float rotation_matrix[4][4] = {0};
-        generate_rotation_matrix_z(rotation_matrix, i * M_PI / 2);
+    float rotation_matrix_z[4][4] = {0};
+
+    for (int i = 1; i < 4; i++){
+        generate_rotation_matrix_z(rotation_matrix_z, i * M_PI / 2);
 
         float coordinates_rotation[points][3];
 
-        apply_rotation(rotation_matrix, coordinates, coordinates_rotation, points);
+        apply_rotation(rotation_matrix_z, coordinates, coordinates_rotation, points);
 
         write_points_plane(file, points, points_per_row, coordinates_rotation, divisions);
     }
 
-    for (int i = 0; i < 2; i++)
-    {
-        float rotation_matrix[4][4] = {0};
-        generate_rotation_matrix_x(rotation_matrix, (2 * i + 1) * M_PI / 2);
+    float rotation_matrix_x[4][4] = {0};
+    for (int i = 0; i < 2; i++){
+        generate_rotation_matrix_x(rotation_matrix_x, (2 * i + 1) * M_PI / 2);
 
         float coordinates_rotation[points][3];
 
-        apply_rotation(rotation_matrix, coordinates, coordinates_rotation, points);
-
+        apply_rotation(rotation_matrix_x, coordinates, coordinates_rotation, points);
         write_points_plane(file, points, points_per_row, coordinates_rotation, divisions);
     }
 
@@ -161,12 +155,7 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
     float slices_angle = 2 * M_PI / slices;
     float stacks_angle = M_PI / stacks;
 
-    std::ofstream file(filename);
-    if (!file)
-    {
-        std::cerr << "Error when trying to open the file!" << std::endl;
-        exit(0);
-    }
+    std::ofstream file = open_file(filename);
 
     file << slices * stacks * 6 << "\n";
 
@@ -204,20 +193,16 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     float coordinates[divisions + 1][3];
     float angle = 2 * M_PI / divisions;
 
-    std::ofstream file(filename);
-    if(!file){
-        std::cerr << "Error when trying to open the file!" << std::endl;
-        exit(0);
-    }
+    std::ofstream file = open_file(filename);
     file << divisions * slices * 6 << std::endl;
-    for(int i = 0; i < divisions + 1; i++){
-        
-        float rotation_matrix[4][4] = {0};
-        generate_rotation_matrix_z(rotation_matrix, angle * i);
 
-        coordinates[i][0] = radius  + (0 * rotation_matrix[0][0]) + circle_radius * rotation_matrix[0][1] + 0 * rotation_matrix[0][2];
-        coordinates[i][1] = 0 * rotation_matrix[1][0] + circle_radius * rotation_matrix[1][1] + 0 * rotation_matrix[1][2];
-        coordinates[i][2] = 0 * rotation_matrix[2][0] + circle_radius * rotation_matrix[2][1] + 0 * rotation_matrix[2][2];
+    float rotation_matrix_z[4][4] = {0};
+    for(int i = 0; i < divisions + 1; i++){
+        generate_rotation_matrix_z(rotation_matrix_z, angle * i);
+
+        coordinates[i][0] = radius  + (0 * rotation_matrix_z[0][0]) + circle_radius * rotation_matrix_z[0][1] + 0 * rotation_matrix_z[0][2];
+        coordinates[i][1] = 0 * rotation_matrix_z[1][0] + circle_radius * rotation_matrix_z[1][1] + 0 * rotation_matrix_z[1][2];
+        coordinates[i][2] = 0 * rotation_matrix_z[2][0] + circle_radius * rotation_matrix_z[2][1] + 0 * rotation_matrix_z[2][2];
 
     }
     
@@ -225,13 +210,12 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
 
     float previous_coordinates[divisions + 1][3];
     std::memcpy(previous_coordinates, coordinates, sizeof(coordinates));
-
+    float rotation_matrix_y[4][4] = {0};
     for(int i = 0; i < slices; i++){
-        float rotation_matrix[4][4] = {0};
-        generate_rotation_matrix_y(rotation_matrix, angle * (i + 1));
+        generate_rotation_matrix_y(rotation_matrix_y, angle * (i + 1));
 
         float next_coordinates[divisions + 1][3];
-        apply_rotation(rotation_matrix, coordinates, next_coordinates, divisions + 1);  
+        apply_rotation(rotation_matrix_y, coordinates, next_coordinates, divisions + 1);  
 
         for(int j = 0; j < divisions; j++){
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
@@ -249,8 +233,7 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     file.close();
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv){
 
     if (std::strcmp(argv[1], "box") == 0 && argc == 5)
     {
@@ -293,8 +276,12 @@ int main(int argc, char **argv)
         float circle_radius = std::stof(argv[3]);
         float slices = std::stoi(argv[4]);
         float divisions = std::stoi(argv[5]);
-
-        generate_torus(radius, circle_radius, slices, divisions, argv[6]);
+        
+        if(radius < circle_radius && slices < 2 && divisions < 2){
+            std::cout << "Radius must be greater than circle_radius and slices and divisions must be greater than 2" << std::endl;
+        }else{
+            generate_torus(radius, circle_radius, slices, divisions, argv[6]);
+        }
     }else{
         std::cout << "Something went wrong" << std::endl;
     }

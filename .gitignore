@@ -1,11 +1,11 @@
 #Ignore any file without an extension
 generator
-
+phase1
 
 #Ignore files with an extension
 *.out
 *.3d
 
 build/
-
+.vscode
 xml_syntax.xml
