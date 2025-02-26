@@ -188,6 +188,99 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
     }
     file.close();
 }
+void generate_cone(float radius, float height, int slices, int stacks, char *filename)
+{
+    std::ofstream file(filename);
+    if (!file)
+    {
+        std::cerr << "Error when trying to open the file!" << std::endl;
+        exit(0);
+    }
+
+    float angle = 2 * M_PI / slices;
+    float stack_height = height / stacks;
+    float stack_radius_step = radius / stacks;
+
+    int total_points = (slices * 6) + (slices * stacks * 6) + (slices * 3);
+    file << total_points << "\n";
+
+    
+    float base_coordinates[slices][3];
+    for (int i = 0; i < slices; i++)
+    {
+        float rotation_matrix[4][4] = {0};
+        generate_rotation_matrix_y(rotation_matrix, i * angle);
+
+        base_coordinates[i][0] = radius * rotation_matrix[2][0];
+        base_coordinates[i][1] = 0;
+        base_coordinates[i][2] = radius * rotation_matrix[0][0];
+    }
+
+    
+    for (int i = 0; i < slices; i++)
+    {
+        int next = (i + 1) % slices;
+        file << "0 0 0\n";
+        file << base_coordinates[i][0] << " 0 " << base_coordinates[i][2] << "\n";
+        file << base_coordinates[next][0] << " 0 " << base_coordinates[next][2] << "\n";
+    }
+
+    float next_coordinates[slices][3];
+    
+    for (int j = 0; j < stacks; j++)
+    {
+        float current_radius = radius - (stack_radius_step * j);
+        float next_radius = radius - (stack_radius_step * (j + 1));
+        float current_height = stack_height * j;
+        float next_height = stack_height * (j + 1);
+
+        float current_coordinates[slices][3];
+        
+
+        for (int i = 0; i < slices; i++)
+        {
+            float rotation_matrix[4][4] = {0};
+            generate_rotation_matrix_y(rotation_matrix, i * angle);
+
+            current_coordinates[i][0] = current_radius * rotation_matrix[2][0];
+            current_coordinates[i][1] = current_height;
+            current_coordinates[i][2] = current_radius * rotation_matrix[0][0];
+
+            next_coordinates[i][0] = next_radius * rotation_matrix[2][0];
+            next_coordinates[i][1] = next_height;
+            next_coordinates[i][2] = next_radius * rotation_matrix[0][0];
+        }
+
+        for (int i = 0; i < slices; i++)
+        {
+            int next = (i + 1) % slices;
+
+            
+            file << current_coordinates[i][0] << " " << current_coordinates[i][1] << " " << current_coordinates[i][2] << "\n";
+            file << next_coordinates[i][0] << " " << next_coordinates[i][1] << " " << next_coordinates[i][2] << "\n";
+            file << next_coordinates[next][0] << " " << next_coordinates[next][1] << " " << next_coordinates[next][2] << "\n";
+
+            
+            file << current_coordinates[i][0] << " " << current_coordinates[i][1] << " " << current_coordinates[i][2] << "\n";
+            file << next_coordinates[next][0] << " " << next_coordinates[next][1] << " " << next_coordinates[next][2] << "\n";
+            file << current_coordinates[next][0] << " " << current_coordinates[next][1] << " " << current_coordinates[next][2] << "\n";
+        }
+    }
+
+
+    for (int i = 0; i < slices; i++)
+    {
+        int next = (i + 1) % slices;
+        
+        
+        file << next_coordinates[i][0] << " " << next_coordinates[i][1] << " " << next_coordinates[i][2] << "\n";
+        file << "0 " << height << " 0\n";
+        file << next_coordinates[next][0] << " " << next_coordinates[next][1] << " " << next_coordinates[next][2] << "\n";
+    }
+    
+
+    file.close();
+}
 
 void generate_torus(float radius, float circle_radius, int slices, int divisions, char *filename){
     float coordinates[divisions + 1][3];
@@ -260,6 +353,19 @@ int main(int argc, char **argv){
     }
     else if (strcmp(argv[1], "cone") == 0 && argc == 7)
     {
+        float radius = std::stof(argv[2]);
+        float height = std::stof(argv[3]);
+        int slices = std::stoi(argv[4]);
+        int stacks = std::stoi(argv[5]);
+
+        if (radius <= 0 || height <= 0 || slices <= 0 || stacks <= 0)
+        {
+            std::cout << "Radius, height, slices and stacks must be greater than 0!" << std::endl;
+        }
+        else
+        {
+            generate_cone(radius, height, slices, stacks, argv[6]);
+        }
     }
     else if (strcmp(argv[1], "plane") == 0 && argc == 5)
     {
