@@ -1,3 +1,4 @@
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <stdlib.h>
@@ -206,14 +207,13 @@ void generate_cone(float radius, float height, int slices, int stacks, char *fil
 
     
     float base_coordinates[slices][3];
-    for (int i = 0; i < slices; i++)
-    {
-        float rotation_matrix[4][4] = {0};
-        generate_rotation_matrix_y(rotation_matrix, i * angle);
+    float rotation_matrix_y[4][4] = {0};
+    for (int i = 0; i < slices; i++){
+        generate_rotation_matrix_y(rotation_matrix_y, i * angle);
 
-        base_coordinates[i][0] = radius * rotation_matrix[2][0];
+        base_coordinates[i][0] = radius * rotation_matrix_y[2][0];
         base_coordinates[i][1] = 0;
-        base_coordinates[i][2] = radius * rotation_matrix[0][0];
+        base_coordinates[i][2] = radius * rotation_matrix_y[0][0];
     }
 
     
@@ -239,16 +239,15 @@ void generate_cone(float radius, float height, int slices, int stacks, char *fil
 
         for (int i = 0; i < slices; i++)
         {
-            float rotation_matrix[4][4] = {0};
-            generate_rotation_matrix_y(rotation_matrix, i * angle);
+            generate_rotation_matrix_y(rotation_matrix_y, i * angle);
 
-            current_coordinates[i][0] = current_radius * rotation_matrix[2][0];
+            current_coordinates[i][0] = current_radius * rotation_matrix_y[2][0];
             current_coordinates[i][1] = current_height;
-            current_coordinates[i][2] = current_radius * rotation_matrix[0][0];
+            current_coordinates[i][2] = current_radius * rotation_matrix_y[0][0];
 
-            next_coordinates[i][0] = next_radius * rotation_matrix[2][0];
+            next_coordinates[i][0] = next_radius * rotation_matrix_y[2][0];
             next_coordinates[i][1] = next_height;
-            next_coordinates[i][2] = next_radius * rotation_matrix[0][0];
+            next_coordinates[i][2] = next_radius * rotation_matrix_y[0][0];
         }
 
         for (int i = 0; i < slices; i++)
@@ -324,6 +323,44 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     }
 
     file.close();
+}   
+
+void generate_cylinder(float radius, float height, int divisions, char *filename){
+    std::ofstream file = open_file(filename);
+    
+    float angle = 2 * M_PI / divisions;
+    float coordinates[2][3] = {{radius, height / 2, 0}, {radius, -height / 2, 0}};
+    file << (3 * divisions) * 2 + 6 * divisions << "\n";
+    
+    float rotation_matrix_y[4][4] = {0};
+    float previous_coordinates[2][3];
+
+    std::memcpy(previous_coordinates, coordinates, sizeof(coordinates));
+    for(int i = 1; i <= divisions; i++){
+        float new_coordinates[2][3];
+        generate_rotation_matrix_y(rotation_matrix_y, angle * i);
+        apply_rotation(rotation_matrix_y, coordinates, new_coordinates, 2);
+
+        file << previous_coordinates[0][0] << " " << previous_coordinates[0][1] << " " << previous_coordinates[0][2] << "\n";
+        file << new_coordinates[0][0] << " " << new_coordinates[0][1] << " " << new_coordinates[0][2] << "\n";
+        file << 0 << " " << previous_coordinates[0][1] << " " << 0 << "\n";
+
+        file << new_coordinates[1][0] << " " << new_coordinates[1][1] << " " << new_coordinates[1][2] << "\n";
+        file << previous_coordinates[1][0] << " " << previous_coordinates[1][1] << " " << previous_coordinates[1][2] << "\n";
+        file << 0 << " " << new_coordinates[1][1] << " " << 0 << "\n";
+
+        file << previous_coordinates[0][0] << " " << previous_coordinates[0][1] << " " << previous_coordinates[0][2] << "\n";
+        file << previous_coordinates[1][0] << " " << previous_coordinates[1][1] << " " << previous_coordinates[1][2] << "\n";
+        file << new_coordinates[1][0] << " " << new_coordinates[1][1] << " " << new_coordinates[1][2] << "\n";
+
+        file << previous_coordinates[0][0] << " " << previous_coordinates[0][1] << " " << previous_coordinates[0][2] << "\n";
+        file << new_coordinates[1][0] << " " << new_coordinates[1][1] << " " << new_coordinates[1][2] << "\n";
+        file << new_coordinates[0][0] << " " << new_coordinates[0][1] << " " << new_coordinates[0][2] << "\n";
+
+        std::memcpy(previous_coordinates, new_coordinates, sizeof(new_coordinates));
+    }  
+    
+    file.close();
 }
 
 int main(int argc, char **argv){
@@ -383,10 +420,20 @@ int main(int argc, char **argv){
         float slices = std::stoi(argv[4]);
         float divisions = std::stoi(argv[5]);
         
-        if(radius < circle_radius && slices < 2 && divisions < 2){
+        if(radius < circle_radius || slices < 2 || divisions < 2){
             std::cout << "Radius must be greater than circle_radius and slices and divisions must be greater than 2" << std::endl;
         }else{
             generate_torus(radius, circle_radius, slices, divisions, argv[6]);
+        }
+    }else if(strcmp(argv[1], "cylinder") == 0  && argc == 6){
+        float radius = std::stof(argv[2]);
+        float height = std::stof(argv[3]);
+        float divisions = std::stof(argv[4]);
+
+        if(radius <= 0 || height <= 0 || divisions < 2){
+            std::cout << "Radius and height must be greater than 0 and divisions must be greater than 2" << std::endl;
+        }else{
+            generate_cylinder(radius, height, divisions, argv[5]);
         }
     }else{
         std::cout << "Something went wrong" << std::endl;
