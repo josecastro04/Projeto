@@ -14,35 +14,31 @@
 #include <GL/glut.h>
 #endif
 
-struct Point
-{
+using namespace std;
+
+struct Point{
     float x, y, z;
 };
 
-struct Window
-{
+struct Window{
     int width;
     int height;
 };
 
-struct Models
-{
-    std::list<std::string> model;
+struct Models{
+    list<string> model;
 };
 
-struct Camera
-{
+struct Camera{
     Point position;
     Point lookAt;
     Point up;
-    struct
-    {
+    struct{
         float fov, near, far;
     } projection;
 };
 
-struct World
-{
+struct World{
     Window window;
     Camera camera;
     Models models;
@@ -50,10 +46,10 @@ struct World
 
 World world;
 float radius;
-float alfa = 0.0f, beta = 0.0f;
+float alfa = 0.0f;
+float omega = 0.0f;
 
-void drawAxis()
-{
+void drawAxis(){
     glBegin(GL_LINES);
 
     glColor3f(0.0f, 1.0f, 0.0f);
@@ -71,28 +67,27 @@ void drawAxis()
     glEnd();
 }
 
-void drawFigure(std::string filename)
+void drawFigure(string filename)
 {
-    std::ifstream file(filename);
+    ifstream file(filename);
     if (!file)
     {
-        std::cerr << "Error when trying to open the file!" << std::endl;
-        return;
+        cerr << "Error when trying to open the file!" << endl;
+        exit(0);
     }
 
     glBegin(GL_TRIANGLES);
     glColor3f(1.0f, 1.0f, 1.0f);
-    std::string line;
-    std::getline(file, line);
-    while (std::getline(file, line))
+    string line;
+    getline(file, line);
+    while (getline(file, line))
     {
-        std::istringstream stream(line);
+        istringstream stream(line);
 
         float x, y, z;
 
-        if (!(stream >> x >> y >> z))
-        {
-            std::cerr << "Error when trying to read the values!" << std::endl;
+        if (!(stream >> x >> y >> z)){
+            cerr << "Error when trying to read the values!" << endl;
             glEnd();
             file.close();
             return;
@@ -103,12 +98,11 @@ void drawFigure(std::string filename)
 
     glEnd();
     file.close();
-}
-
+} 
 void spherical2Cartesian(){
-    world.camera.position.x = radius * cos(beta) * sin(alfa);
-    world.camera.position.y = radius * sin(beta);
-    world.camera.position.z = radius * cos(beta) * cos(alfa);
+    world.camera.position.x = radius * cos(omega) * sin(alfa);
+    world.camera.position.y = radius * sin(omega);
+    world.camera.position.z = radius * cos(omega) * cos(alfa);
 }
 
 void changeSize(int w, int h)
@@ -144,7 +138,7 @@ void renderScene(void)
     // desenhar models
     drawAxis();
 
-    for (std::string filename : world.models.model)
+    for (string filename : world.models.model)
     {
         drawFigure(filename);
     }
@@ -159,61 +153,64 @@ void parseInfo(char *filename)
 
     if (eResult != XML_SUCCESS)
     {
-        std::cout << "Error: " << eResult << std::endl;
+        cout << "Error: " << eResult << endl;
         exit(0);
     }
 
     XMLNode *pRoot = doc.FirstChild();
     if (pRoot == nullptr)
     {
-        std::cout << "Error: " << XML_ERROR_FILE_READ_ERROR << std::endl;
+        cout << "Error: " << XML_ERROR_FILE_READ_ERROR << endl;
         exit(0);
     }
 
     XMLElement *pElement = pRoot->FirstChildElement("window");
-    if (pElement == nullptr)
-    {
-        std::cout << "Error: " << XML_ERROR_FILE_READ_ERROR << std::endl;
-        exit(0);
+    if (pElement) {
+        pElement->QueryIntAttribute("width", &world.window.width);
+        pElement->QueryIntAttribute("height", &world.window.height);
     }
 
-    pElement->QueryIntAttribute("width", &world.window.width);
-    pElement->QueryIntAttribute("height", &world.window.height);
+    XMLElement *cameraElement = pRoot->FirstChildElement("camera");
+    if (cameraElement) {
+        XMLElement *position = cameraElement->FirstChildElement("position");
+        if (position) {
+            position->QueryFloatAttribute("x", &world.camera.position.x);
+            position->QueryFloatAttribute("y", &world.camera.position.y);
+            position->QueryFloatAttribute("z", &world.camera.position.z);
+        }
 
-    pElement = pRoot->FirstChildElement("camera");
-    XMLElement *cameraElements = pElement->FirstChildElement("position");
-    cameraElements->QueryFloatAttribute("x", &world.camera.position.x);
-    cameraElements->QueryFloatAttribute("y", &world.camera.position.y);
-    cameraElements->QueryFloatAttribute("z", &world.camera.position.z);
+        XMLElement *lookAt = cameraElement->FirstChildElement("lookAt");
+        if (lookAt) {
+            lookAt->QueryFloatAttribute("x", &world.camera.lookAt.x);
+            lookAt->QueryFloatAttribute("y", &world.camera.lookAt.y);
+            lookAt->QueryFloatAttribute("z", &world.camera.lookAt.z);
+        }
 
-    cameraElements = pElement->FirstChildElement("lookAt");
-    cameraElements->QueryFloatAttribute("x", &world.camera.lookAt.x);
-    cameraElements->QueryFloatAttribute("y", &world.camera.lookAt.y);
-    cameraElements->QueryFloatAttribute("z", &world.camera.lookAt.z);
+        XMLElement *up = cameraElement->FirstChildElement("up");
+        if (up) {
+            up->QueryFloatAttribute("x", &world.camera.up.x);
+            up->QueryFloatAttribute("y", &world.camera.up.y);
+            up->QueryFloatAttribute("z", &world.camera.up.z);
+        }
 
-    cameraElements = pElement->FirstChildElement("up");
-    cameraElements->QueryFloatAttribute("x", &world.camera.up.x);
-    cameraElements->QueryFloatAttribute("y", &world.camera.up.y);
-    cameraElements->QueryFloatAttribute("z", &world.camera.up.z);
+        XMLElement *projection = cameraElement->FirstChildElement("projection");
+        if (projection) {
+            projection->QueryFloatAttribute("fov", &world.camera.projection.fov);
+            projection->QueryFloatAttribute("near", &world.camera.projection.near);
+            projection->QueryFloatAttribute("far", &world.camera.projection.far);
+        }
+    }
 
-    cameraElements = pElement->FirstChildElement("projection");
-    cameraElements->QueryFloatAttribute("fov", &world.camera.projection.fov);
-    cameraElements->QueryFloatAttribute("near", &world.camera.projection.near);
-    cameraElements->QueryFloatAttribute("far", &world.camera.projection.far);
-
-    pElement = pRoot->FirstChildElement("group");
-    XMLElement *modelsElements = pElement->FirstChildElement("models");
-    XMLElement *listModelElements = modelsElements->FirstChildElement("model");
-
-    while (listModelElements != nullptr)
-    {
-        const char *model_filename = nullptr;
-
-        model_filename = listModelElements->Attribute("file");
-
-        std::string model = model_filename;
-        world.models.model.push_back(model);
-        listModelElements = listModelElements->NextSiblingElement("model");
+    XMLElement *modelsElement = pRoot->FirstChildElement("group");
+    if (modelsElement) {
+        XMLElement *modelNode = modelsElement->FirstChildElement("models")->FirstChildElement("model");
+        while (modelNode) {
+            const char *modelFile = modelNode->Attribute("file");
+            if (modelFile) {
+                world.models.model.push_back(std::string(modelFile));
+            }
+            modelNode = modelNode->NextSiblingElement("model");
+        }
     }
 }
 
@@ -226,10 +223,10 @@ void processSpecialKeys(int key, int xx, int yy){
         alfa += 0.1; break;
 
     case GLUT_KEY_UP:
-        beta += 0.1; break;
+        omega += 0.1; break;
 
     case GLUT_KEY_DOWN:
-        beta -= 0.1f; break;
+        omega -= 0.1f; break;
 
     case GLUT_KEY_PAGE_DOWN: radius -= 0.1f;
         if(radius < 0.1f)
@@ -247,7 +244,7 @@ int main(int argc, char **argv)
 {
     if (argc < 2)
     {
-        std::cout << "Someting went wrong!" << std::endl;
+        cout << "Someting went wrong!" << endl;
         return 0;
     }
     parseInfo(argv[1]);
