@@ -17,29 +17,35 @@
 
 using namespace std;
 
-struct Point{
+struct Point
+{
     float x, y, z;
 };
 
-struct Window{
+struct Window
+{
     int width;
     int height;
 };
 
-struct Models{
+struct Models
+{
     list<string> model;
 };
 
-struct Camera{
+struct Camera
+{
     Point position;
     Point lookAt;
     Point up;
-    struct{
+    struct
+    {
         float fov, near, far;
     } projection;
 };
 
-struct World{
+struct World
+{
     Window window;
     Camera camera;
     Models models;
@@ -50,24 +56,25 @@ World world;
 float omega = 0.0f, alpha = 0.0f, radius = 5.0f;
 bool keyStates[256] = {false};
 
- void key_press(unsigned char key, int x, int y)
+void key_press(unsigned char key, int x, int y)
 {
-     keyStates[key] = true;
- }
+    keyStates[key] = true;
+}
 
- void key_up(unsigned char key, int x, int y)
+void key_up(unsigned char key, int x, int y)
 {
-     keyStates[key] = false;
- }
+    keyStates[key] = false;
+}
 
- void SphericalToCartesian()
+void SphericalToCartesian()
 {
-     world.camera.position.x = radius * cos(omega) * sin(alpha);
-     world.camera.position.y = radius * sin(omega);
-     world.camera.position.z = radius * cos(omega) * cos(alpha);
- }
+    world.camera.position.x = radius * cos(omega) * sin(alpha);
+    world.camera.position.y = radius * sin(omega);
+    world.camera.position.z = radius * cos(omega) * cos(alpha);
+}
 
-void drawAxis(){
+void drawAxis()
+{
     glBegin(GL_LINES);
 
     glColor3f(0.0f, 1.0f, 0.0f);
@@ -105,7 +112,8 @@ void drawFigure(string filename)
 
         float x, y, z;
 
-        if (!(stream >> x >> y >> z)){
+        if (!(stream >> x >> y >> z))
+        {
             cerr << "Error when trying to read the values!" << endl;
             glEnd();
             file.close();
@@ -117,7 +125,7 @@ void drawFigure(string filename)
 
     glEnd();
     file.close();
-} 
+}
 
 void changeSize(int w, int h)
 {
@@ -159,37 +167,53 @@ void renderScene(void)
     glutSwapBuffers();
 }
 
- void processKeys()
+void processKeys()
 {
-     if (keyStates['w'])
-     {
-         omega += 0.02f;
-         if (omega > M_PI / 2.0f)
-         {
-             omega = M_PI / 2.0f;
-         }
-     }
-     if (keyStates['s'])
-     {
-         omega -= 0.02f;
-         if (omega < -M_PI / 2.0f)
-         {
-             omega = -M_PI / 2.0f;
-         }
-     }
-     if (keyStates['a'])
-     {
-         alpha -= 0.02f;
-     }
-     if (keyStates['d'])
-     {
-         alpha += 0.02f;
-     }
+    if (keyStates['w'])
+    {
+        omega += 0.02f;
+        if (omega > M_PI / 2.0f)
+        {
+            omega = M_PI / 2.0f;
+        }
+    }
+    if (keyStates['s'])
+    {
+        omega -= 0.02f;
+        if (omega < -M_PI / 2.0f)
+        {
+            omega = -M_PI / 2.0f;
+        }
+    }
+    if (keyStates['a'])
+    {
+        alpha -= 0.02f;
+    }
+    if (keyStates['d'])
+    {
+        alpha += 0.02f;
+    }
+    if (keyStates['-'])
+    {
+        radius -= 0.01f;
+        if (radius < 3.0f)
+        {
+            radius = 3.0f;
+        }
+    }
+    if (keyStates['+'])
+    {
+        radius += 0.01f;
+        if (radius > 50.0f)
+        {
+            radius = 50.0f;
+        }
+    }
 
-     SphericalToCartesian();
+    SphericalToCartesian();
 
-     glutPostRedisplay();
- }
+    glutPostRedisplay();
+}
 
 void parseInfo(char *filename)
 {
@@ -211,7 +235,8 @@ void parseInfo(char *filename)
     }
 
     XMLElement *pElement = pRoot->FirstChildElement("window");
-    if (pElement) {
+    if (pElement)
+    {
         pElement->QueryIntAttribute("width", &world.window.width);
         pElement->QueryIntAttribute("height", &world.window.height);
     }
@@ -226,30 +251,35 @@ void parseInfo(char *filename)
     omega = asin(world.camera.position.y / radius);
     alpha = asin(world.camera.position.x / (radius * cos(omega)));
     XMLElement *cameraElement = pRoot->FirstChildElement("camera");
-    if (cameraElement) {
+    if (cameraElement)
+    {
         XMLElement *position = cameraElement->FirstChildElement("position");
-        if (position) {
+        if (position)
+        {
             position->QueryFloatAttribute("x", &world.camera.position.x);
             position->QueryFloatAttribute("y", &world.camera.position.y);
             position->QueryFloatAttribute("z", &world.camera.position.z);
         }
 
         XMLElement *lookAt = cameraElement->FirstChildElement("lookAt");
-        if (lookAt) {
+        if (lookAt)
+        {
             lookAt->QueryFloatAttribute("x", &world.camera.lookAt.x);
             lookAt->QueryFloatAttribute("y", &world.camera.lookAt.y);
             lookAt->QueryFloatAttribute("z", &world.camera.lookAt.z);
         }
 
         XMLElement *up = cameraElement->FirstChildElement("up");
-        if (up) {
+        if (up)
+        {
             up->QueryFloatAttribute("x", &world.camera.up.x);
             up->QueryFloatAttribute("y", &world.camera.up.y);
             up->QueryFloatAttribute("z", &world.camera.up.z);
         }
 
         XMLElement *projection = cameraElement->FirstChildElement("projection");
-        if (projection) {
+        if (projection)
+        {
             projection->QueryFloatAttribute("fov", &world.camera.projection.fov);
             projection->QueryFloatAttribute("near", &world.camera.projection.near);
             projection->QueryFloatAttribute("far", &world.camera.projection.far);
@@ -257,11 +287,14 @@ void parseInfo(char *filename)
     }
 
     XMLElement *modelsElement = pRoot->FirstChildElement("group");
-    if (modelsElement) {
+    if (modelsElement)
+    {
         XMLElement *modelNode = modelsElement->FirstChildElement("models")->FirstChildElement("model");
-        while (modelNode) {
+        while (modelNode)
+        {
             const char *modelFile = modelNode->Attribute("file");
-            if (modelFile) {
+            if (modelFile)
+            {
                 world.models.model.push_back(std::string(modelFile));
             }
             modelNode = modelNode->NextSiblingElement("model");
@@ -278,7 +311,7 @@ int main(int argc, char **argv)
     }
     SphericalToCartesian();
     parseInfo(argv[1]);
-   
+
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowPosition(100, 100);
