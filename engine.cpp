@@ -7,6 +7,7 @@
 #include <list>
 #include <sstream>
 #include <string>
+#include <math.h>
 #include "TinyXML/tinyxml2.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -46,6 +47,26 @@ struct World{
 
 World world;
 
+ float beta = 0.0f, alpha = 0.0f, radius = 5.0f;
+ bool keyStates[256] = {false};
+
+ void key_press(unsigned char key, int x, int y)
+{
+     keyStates[key] = true;
+ }
+
+ void key_up(unsigned char key, int x, int y)
+{
+     keyStates[key] = false;
+ }
+
+ void SphericalToCartesian()
+{
+     world.camera.position.x = radius * cos(beta) * sin(alpha);
+     world.camera.position.y = radius * sin(beta);
+     world.camera.position.z = radius * cos(beta) * cos(alpha);
+ }
+
 void drawAxis(){
     glBegin(GL_LINES);
 
@@ -62,6 +83,7 @@ void drawAxis(){
     glVertex3f(0.0f, 0.0f, 150.0f);
 
     glEnd();
+    glColor3f(1.0f, 1.0f, 1.0f);
 }
 
 void drawFigure(string filename)
@@ -137,6 +159,38 @@ void renderScene(void)
     glutSwapBuffers();
 }
 
+ void processKeys()
+{
+     if (keyStates['w'])
+     {
+         beta += 0.02f;
+         if (beta > M_PI / 2.0f)
+         {
+             beta = M_PI / 2.0f;
+         }
+     }
+     if (keyStates['s'])
+     {
+         beta -= 0.02f;
+         if (beta < -M_PI / 2.0f)
+         {
+             beta = -M_PI / 2.0f;
+         }
+     }
+     if (keyStates['a'])
+     {
+         alpha -= 0.02f;
+     }
+     if (keyStates['d'])
+     {
+         alpha += 0.02f;
+     }
+
+     SphericalToCartesian();
+
+     glutPostRedisplay();
+ }
+
 void parseInfo(char *filename)
 {
     using namespace tinyxml2;
@@ -162,6 +216,15 @@ void parseInfo(char *filename)
         pElement->QueryIntAttribute("height", &world.window.height);
     }
 
+    pElement = pRoot->FirstChildElement("camera");
+    XMLElement *cameraElements = pElement->FirstChildElement("position");
+    cameraElements->QueryFloatAttribute("x", &world.camera.position.x);
+    cameraElements->QueryFloatAttribute("y", &world.camera.position.y);
+    cameraElements->QueryFloatAttribute("z", &world.camera.position.z);
+
+    radius = sqrt(pow(world.camera.position.x, 2) + pow(world.camera.position.y, 2) + pow(world.camera.position.z, 2));
+    beta = asin(world.camera.position.y / radius);
+    alpha = asin(world.camera.position.x / (radius * cos(beta)));
     XMLElement *cameraElement = pRoot->FirstChildElement("camera");
     if (cameraElement) {
         XMLElement *position = cameraElement->FirstChildElement("position");
@@ -213,6 +276,7 @@ int main(int argc, char **argv)
         cout << "Someting went wrong!" << endl;
         return 0;
     }
+    SphericalToCartesian();
     parseInfo(argv[1]);
    
     glutInit(&argc, argv);
@@ -223,6 +287,10 @@ int main(int argc, char **argv)
 
     glutDisplayFunc(renderScene);
     glutReshapeFunc(changeSize);
+
+    glutKeyboardFunc(key_press);
+    glutKeyboardUpFunc(key_up);
+    glutIdleFunc(processKeys);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
