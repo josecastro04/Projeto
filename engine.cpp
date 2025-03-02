@@ -47,8 +47,8 @@ struct World{
 
 World world;
 
- float beta = 0.0f, alpha = 0.0f, radius = 5.0f;
- bool keyStates[256] = {false};
+float omega = 0.0f, alpha = 0.0f, radius = 5.0f;
+bool keyStates[256] = {false};
 
  void key_press(unsigned char key, int x, int y)
 {
@@ -62,9 +62,9 @@ World world;
 
  void SphericalToCartesian()
 {
-     world.camera.position.x = radius * cos(beta) * sin(alpha);
-     world.camera.position.y = radius * sin(beta);
-     world.camera.position.z = radius * cos(beta) * cos(alpha);
+     world.camera.position.x = radius * cos(omega) * sin(alpha);
+     world.camera.position.y = radius * sin(omega);
+     world.camera.position.z = radius * cos(omega) * cos(alpha);
  }
 
 void drawAxis(){
@@ -163,18 +163,18 @@ void renderScene(void)
 {
      if (keyStates['w'])
      {
-         beta += 0.02f;
-         if (beta > M_PI / 2.0f)
+         omega += 0.02f;
+         if (omega > M_PI / 2.0f)
          {
-             beta = M_PI / 2.0f;
+             omega = M_PI / 2.0f;
          }
      }
      if (keyStates['s'])
      {
-         beta -= 0.02f;
-         if (beta < -M_PI / 2.0f)
+         omega -= 0.02f;
+         if (omega < -M_PI / 2.0f)
          {
-             beta = -M_PI / 2.0f;
+             omega = -M_PI / 2.0f;
          }
      }
      if (keyStates['a'])
@@ -223,8 +223,8 @@ void parseInfo(char *filename)
     cameraElements->QueryFloatAttribute("z", &world.camera.position.z);
 
     radius = sqrt(pow(world.camera.position.x, 2) + pow(world.camera.position.y, 2) + pow(world.camera.position.z, 2));
-    beta = asin(world.camera.position.y / radius);
-    alpha = asin(world.camera.position.x / (radius * cos(beta)));
+    omega = asin(world.camera.position.y / radius);
+    alpha = asin(world.camera.position.x / (radius * cos(omega)));
     XMLElement *cameraElement = pRoot->FirstChildElement("camera");
     if (cameraElement) {
         XMLElement *position = cameraElement->FirstChildElement("position");
