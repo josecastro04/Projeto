@@ -45,9 +45,6 @@ struct World{
 };
 
 World world;
-float radius;
-float alfa = 0.0f;
-float omega = 0.0f;
 
 void drawAxis(){
     glBegin(GL_LINES);
@@ -99,11 +96,6 @@ void drawFigure(string filename)
     glEnd();
     file.close();
 } 
-void spherical2Cartesian(){
-    world.camera.position.x = radius * cos(omega) * sin(alfa);
-    world.camera.position.y = radius * sin(omega);
-    world.camera.position.z = radius * cos(omega) * cos(alfa);
-}
 
 void changeSize(int w, int h)
 {
@@ -214,32 +206,6 @@ void parseInfo(char *filename)
     }
 }
 
-void processSpecialKeys(int key, int xx, int yy){
-    switch(key){
-    case GLUT_KEY_RIGHT:
-        alfa -= 0.1; break;
-
-    case GLUT_KEY_LEFT:
-        alfa += 0.1; break;
-
-    case GLUT_KEY_UP:
-        omega += 0.1; break;
-
-    case GLUT_KEY_DOWN:
-        omega -= 0.1f; break;
-
-    case GLUT_KEY_PAGE_DOWN: radius -= 0.1f;
-        if(radius < 0.1f)
-            radius = 0.1f;
-        break;
-
-    case GLUT_KEY_PAGE_UP: radius += 0.1f; break;
-    }
-
-    spherical2Cartesian();
-    glutPostRedisplay();
-}
-
 int main(int argc, char **argv)
 {
     if (argc < 2)
@@ -248,11 +214,7 @@ int main(int argc, char **argv)
         return 0;
     }
     parseInfo(argv[1]);
-
-    radius = sqrt(pow(world.camera.position.x - world.camera.lookAt.x, 2)
-            + pow(world.camera.position.y - world.camera.lookAt.y, 2)
-            + pow(world.camera.position.z - world.camera.lookAt.z, 2));
-
+   
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowPosition(100, 100);
@@ -262,13 +224,9 @@ int main(int argc, char **argv)
     glutDisplayFunc(renderScene);
     glutReshapeFunc(changeSize);
 
-    glutSpecialFunc(processSpecialKeys);
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT, GL_LINE);
-
-    spherical2Cartesian();
 
     glutMainLoop();
 
