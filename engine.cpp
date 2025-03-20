@@ -28,9 +28,20 @@ struct Window
     int height;
 };
 
+struct Transformation {
+    enum Type { TRANSLATE, ROTATE, SCALE };
+    Type type;
+    float x, y, z, angle;
+
+    Transformation(Type t, float x, float y, float z, float angle = 0.0f) 
+        : type(t), x(x), y(y), z(z), angle(angle) {}
+};
+
 struct Models
 {
     list<string> model;
+    list<Transformation> transformations;
+    list<Models> models;
 };
 
 struct Camera
@@ -93,6 +104,7 @@ void drawAxis()
     glColor3f(1.0f, 1.0f, 1.0f);
 }
 
+
 void drawFigure(string filename)
 {
     ifstream file(filename);
@@ -126,6 +138,40 @@ void drawFigure(string filename)
     glEnd();
     file.close();
 }
+void drawModel(Models &models) {
+   
+
+    for (const auto &transformation : models.transformations) {
+        glPushMatrix();
+        switch (transformation.type) {
+            case Transformation::TRANSLATE:
+                glTranslatef(transformation.x, transformation.y, transformation.z);
+                break;
+            case Transformation::ROTATE:
+                glRotatef(transformation.angle, transformation.x, transformation.y, transformation.z);
+                break;
+            case Transformation::SCALE:
+                glScalef(transformation.x, transformation.y, transformation.z);
+                break;
+        }
+        
+    
+
+    
+    for (const string &filename : models.model) {
+        drawFigure(filename);
+      
+    }
+    glPopMatrix();
+    }
+
+    
+    for (Models &childModels : models.models) {
+        drawModel(childModels);
+    }
+
+   
+}
 
 void changeSize(int w, int h)
 {
@@ -147,7 +193,6 @@ void changeSize(int w, int h)
 
 void renderScene(void)
 {
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // camera
@@ -156,14 +201,11 @@ void renderScene(void)
               world.camera.lookAt.x, world.camera.lookAt.y, world.camera.lookAt.z,
               world.camera.up.x, world.camera.up.y, world.camera.up.z);
 
-    glPolygonMode(GL_FRONT, GL_LINE);
-    // desenhar models
-    drawAxis();
-
-    for (string filename : world.models.model)
-    {
-        drawFigure(filename);
-    }
+    glPolygonMode(GL_FRONT,GL_LINE); 
+    drawAxis(); 
+    drawModel(world.models);
+    
+    
     glutSwapBuffers();
 }
 
@@ -174,7 +216,7 @@ void processKeys()
         omega += 0.02f;
         if (omega > M_PI / 2.0f)
         {
-            omega = M_PI / 2.0f;
+            omega = M_PI / 2.0f - 0.01f;
         }
     }
     if (keyStates['s'])
@@ -182,7 +224,7 @@ void processKeys()
         omega -= 0.02f;
         if (omega < -M_PI / 2.0f)
         {
-            omega = -M_PI / 2.0f;
+            omega = -M_PI / 2.0f + 0.01f;
         }
     }
     if (keyStates['a'])
@@ -214,6 +256,63 @@ void processKeys()
 
     glutPostRedisplay();
 }
+void parseGroup(tinyxml2::XMLElement *groupElement, Models &models) {
+    if (!groupElement) return;
+
+    tinyxml2::XMLElement *transformElement = groupElement->FirstChildElement("transform");
+    if (transformElement) {
+        for (tinyxml2::XMLElement *child = transformElement->FirstChildElement(); child; child = child->NextSiblingElement()) {
+            string tag = child->Value();
+
+            if (tag == "translate") {
+                float x = 0, y = 0, z = 0;
+                child->QueryFloatAttribute("x", &x);
+                child->QueryFloatAttribute("y", &y);
+                child->QueryFloatAttribute("z", &z);
+                models.transformations.emplace_back(Transformation::TRANSLATE, x, y, z);
+            }
+            else if (tag == "rotate") {
+                float angle = 0, x = 0, y = 0, z = 0;
+                child->QueryFloatAttribute("angle", &angle);
+                child->QueryFloatAttribute("x", &x);
+                child->QueryFloatAttribute("y", &y);
+                child->QueryFloatAttribute("z", &z);
+                models.transformations.emplace_back(Transformation::ROTATE, x, y, z, angle);
+            }
+            else if (tag == "scale") {
+                float x = 1, y = 1, z = 1;
+                child->QueryFloatAttribute("x", &x);
+                child->QueryFloatAttribute("y", &y);
+                child->QueryFloatAttribute("z", &z);
+                models.transformations.emplace_back(Transformation::SCALE, x, y, z);
+            }
+        }
+    }
+
+    
+    tinyxml2::XMLElement *modelsElement = groupElement->FirstChildElement("models");
+    if (modelsElement) {
+        tinyxml2::XMLElement *modelElement = modelsElement->FirstChildElement("model");
+        while (modelElement) {
+            const char *file = modelElement->Attribute("file");
+            if (file) {
+                models.model.push_back(std::string(file));
+            }
+            modelElement = modelElement->NextSiblingElement("model");
+        }
+    }
+
+    
+    tinyxml2::XMLElement *childGroup = groupElement->FirstChildElement("group");
+    while (childGroup) {
+        Models childModels;
+        parseGroup(childGroup, childModels);
+        models.models.push_back(childModels);
+        childGroup = childGroup->NextSiblingElement("group");
+    }
+}
+
+
 
 void parseInfo(char *filename)
 {
@@ -285,21 +384,12 @@ void parseInfo(char *filename)
             projection->QueryFloatAttribute("far", &world.camera.projection.far);
         }
     }
-
     XMLElement *modelsElement = pRoot->FirstChildElement("group");
-    if (modelsElement)
+    if(modelsElement)
     {
-        XMLElement *modelNode = modelsElement->FirstChildElement("models")->FirstChildElement("model");
-        while (modelNode)
-        {
-            const char *modelFile = modelNode->Attribute("file");
-            if (modelFile)
-            {
-                world.models.model.push_back(std::string(modelFile));
-            }
-            modelNode = modelNode->NextSiblingElement("model");
-        }
+        parseGroup(modelsElement, world.models);
     }
+    
 }
 
 int main(int argc, char **argv)
