@@ -7,6 +7,7 @@
 #include <list>
 #include <sstream>
 #include <string>
+#include <variant>
 #include <math.h>
 #include "TinyXML/tinyxml2.h"
 #ifdef __APPLE__
@@ -28,21 +29,28 @@ struct Window
     int height;
 };
 
-struct Transformation {
-    enum Type { TRANSLATE, ROTATE, SCALE };
-    Type type;
+
+
+struct Translate {
+    float x, y, z;
+};
+
+struct Rotate {
     float x, y, z, angle;
-
-    Transformation(Type t, float x, float y, float z, float angle = 0.0f) 
-        : type(t), x(x), y(y), z(z), angle(angle) {}
 };
 
-struct Models
-{
-    list<string> model;
-    list<Transformation> transformations;
-    list<Models> models;
+struct Scale {
+    float x, y, z;
 };
+
+using Transformation = std::variant<Translate, Rotate, Scale>;
+
+struct Models {
+    std::list<std::string> model;
+    std::list<Transformation> transformations;
+    std::list<Models> models;
+};
+
 
 struct Camera
 {
@@ -138,40 +146,36 @@ void drawFigure(string filename)
     glEnd();
     file.close();
 }
-void drawModel(Models &models) {
-   
-
-    for (const auto &transformation : models.transformations) {
-        glPushMatrix();
-        switch (transformation.type) {
-            case Transformation::TRANSLATE:
-                glTranslatef(transformation.x, transformation.y, transformation.z);
-                break;
-            case Transformation::ROTATE:
-                glRotatef(transformation.angle, transformation.x, transformation.y, transformation.z);
-                break;
-            case Transformation::SCALE:
-                glScalef(transformation.x, transformation.y, transformation.z);
-                break;
-        }
-        
+void applyTransformation(const Transformation& transformation) {
+    if (std::holds_alternative<Translate>(transformation)) {
+        const auto& t = std::get<Translate>(transformation);
+        glTranslatef(t.x, t.y, t.z);
+    } else if (std::holds_alternative<Rotate>(transformation)) {
+        const auto& t = std::get<Rotate>(transformation);
+        glRotatef(t.angle, t.x, t.y, t.z);
+    } else if (std::holds_alternative<Scale>(transformation)) {
+        const auto& t = std::get<Scale>(transformation);
+        glScalef(t.x, t.y, t.z);
+    }
+}
+void drawModel(Models& models) {
+    glPushMatrix();
     
-
+    for (const auto& transformation : models.transformations) {
+        applyTransformation(transformation);
+    }
     
-    for (const string &filename : models.model) {
+    for (const std::string& filename : models.model) {
         drawFigure(filename);
-      
     }
-    glPopMatrix();
-    }
-
     
-    for (Models &childModels : models.models) {
+    for (Models& childModels : models.models) {
         drawModel(childModels);
     }
-
-   
+    
+    glPopMatrix();
 }
+
 
 void changeSize(int w, int h)
 {
@@ -257,42 +261,44 @@ void processKeys()
     glutPostRedisplay();
 }
 void parseGroup(tinyxml2::XMLElement *groupElement, Models &models) {
-    if (!groupElement) return;
+    using namespace tinyxml2;
 
-    tinyxml2::XMLElement *transformElement = groupElement->FirstChildElement("transform");
+    XMLElement *transformElement = groupElement->FirstChildElement("transform");
     if (transformElement) {
-        for (tinyxml2::XMLElement *child = transformElement->FirstChildElement(); child; child = child->NextSiblingElement()) {
-            string tag = child->Value();
+        for (XMLElement *child = transformElement->FirstChildElement(); child; child = child->NextSiblingElement()) {
+            string name_trans = child->Value();
 
-            if (tag == "translate") {
-                float x = 0, y = 0, z = 0;
+            if (name_trans == "translate") {
+                float x , y , z ;
                 child->QueryFloatAttribute("x", &x);
                 child->QueryFloatAttribute("y", &y);
                 child->QueryFloatAttribute("z", &z);
-                models.transformations.emplace_back(Transformation::TRANSLATE, x, y, z);
+                models.transformations.emplace_back(Translate{x, y, z});
+
             }
-            else if (tag == "rotate") {
-                float angle = 0, x = 0, y = 0, z = 0;
+            else if (name_trans == "rotate") {
+                float angle , x , y , z;
                 child->QueryFloatAttribute("angle", &angle);
                 child->QueryFloatAttribute("x", &x);
                 child->QueryFloatAttribute("y", &y);
                 child->QueryFloatAttribute("z", &z);
-                models.transformations.emplace_back(Transformation::ROTATE, x, y, z, angle);
+                models.transformations.emplace_back(Rotate{x, y, z, angle});
+
             }
-            else if (tag == "scale") {
-                float x = 1, y = 1, z = 1;
+            else if (name_trans == "scale") {
+                float x , y, z ;
                 child->QueryFloatAttribute("x", &x);
                 child->QueryFloatAttribute("y", &y);
                 child->QueryFloatAttribute("z", &z);
-                models.transformations.emplace_back(Transformation::SCALE, x, y, z);
+                models.transformations.emplace_back(Scale{x, y, z});
             }
         }
     }
 
     
-    tinyxml2::XMLElement *modelsElement = groupElement->FirstChildElement("models");
+    XMLElement *modelsElement = groupElement->FirstChildElement("models");
     if (modelsElement) {
-        tinyxml2::XMLElement *modelElement = modelsElement->FirstChildElement("model");
+        XMLElement *modelElement = modelsElement->FirstChildElement("model");
         while (modelElement) {
             const char *file = modelElement->Attribute("file");
             if (file) {
@@ -303,7 +309,7 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models) {
     }
 
     
-    tinyxml2::XMLElement *childGroup = groupElement->FirstChildElement("group");
+    XMLElement *childGroup = groupElement->FirstChildElement("group");
     while (childGroup) {
         Models childModels;
         parseGroup(childGroup, childModels);
