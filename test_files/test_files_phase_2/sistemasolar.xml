@@ -12,18 +12,19 @@
         <group>
             <transform>
                 <scale x="109.00" y="109.00" z="109.00" />
+                <rotate angle="7.25" x="0" y="0" z="1"/>
             </transform>
             <models>
-                <model file="sphere_1_8_8.3d" />
+                <model file="sphere_1_30_30.3d" />
             </models>
         </group>
 
         <!-- Mercury -->
         <group>
             <transform>
-                <translate x="114.806" y="0" z ="0"/>
+                <translate x="114.806" y="0" z="0" />
                 <scale x="0.382" y="0.382" z="0.382" />
-                <rotate angle="7" x="0" y="0" z="1"/>
+                <rotate angle="7" x="0" y="0" z="1" />
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" />
@@ -33,9 +34,9 @@
         <!-- Venus -->
         <group>
             <transform>
-                <translate x="119.849" y="0" z ="0"/>
+                <translate x="119.849" y="0" z="0" />
                 <scale x="0.948" y="0.948" z="0.948" />
-                <rotate angle="177" x="0" y="0" z="1"/>
+                <rotate angle="177" x="0" y="0" z="1" />
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" />
@@ -45,11 +46,11 @@
         <!-- Earth and Moon -->
         <group>
             <transform>
-                <translate x="124" y="0" z ="0"/>
+                <translate x="124" y="0" z="0" />
             </transform>
             <group>
                 <transform>
-                    <rotate angle="23.5" x="0" y="0" z="1"/>
+                    <rotate angle="23.5" x="0" y="0" z="1" />
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
@@ -57,9 +58,9 @@
             </group>
             <group>
                 <transform>
-                    <translate x="-1.385" y="0" z="0"/>
-                    <scale x="0.272" y="0.272" z="0.272"/>
-                    <rotate angle="1.54" x="0" y="0" z="1"/>
+                    <translate x="-1.385" y="0" z="0" />
+                    <scale x="0.272" y="0.272" z="0.272" />
+                    <rotate angle="1.54" x="0" y="0" z="1" />
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
@@ -70,9 +71,9 @@
         <!-- Mars -->
         <group>
             <transform>
-                <translate x="131.854" y="0" z ="0"/>
+                <translate x="131.854" y="0" z="0" />
                 <scale x="0.531" y="0.531" z="0.531" />
-                <rotate angle="25" x="0" y="0" z="1"/>
+                <rotate angle="25" x="0" y="0" z="1" />
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" />
@@ -82,24 +83,24 @@
         <!-- Jupiter and Moons -->
         <group>
             <transform>
-                <translate x="187.049" y="0" z ="0"/>
+                <translate x="187.049" y="0" z="0" />
             </transform>
             <group>
                 <transform>
                     <scale x="10.961" y="10.961" z="10.961" />
-                    <rotate angle="3" x="0" y="0" z="1"/>
+                    <rotate angle="3" x="0" y="0" z="1" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_15_15.3d" />
                 </models>
             </group>
-            
+
             <!-- Europe -->
             <group>
                 <transform>
-                    <translate x="9.921" y="0" z ="4.778"/>
+                    <translate x="9.921" y="0" z="4.778" />
                     <scale x="0.244" y="0.244" z="0.244" />
-                    <rotate angle="0.471" x="0" y="0" z="1"/>
+                    <rotate angle="0.471" x="0" y="0" z="1" />
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
@@ -108,9 +109,9 @@
             <!-- Io -->
             <group>
                 <transform>
-                    <translate x="-5.506" y="0" z ="-9.536"/>
+                    <translate x="-5.506" y="0" z="-9.536" />
                     <scale x="0.285" y="0.285" z="0.285" />
-                    <rotate angle="0.050" x="0" y="0" z="1"/>
+                    <rotate angle="0.050" x="0" y="0" z="1" />
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
@@ -119,9 +120,9 @@
             <!-- Ganymede -->
             <group>
                 <transform>
-                    <translate x="4.214" y="0" z ="-10.174"/>
+                    <translate x="4.214" y="0" z="-10.174" />
                     <scale x="0.412" y="0.412" z="0.412" />
-                    <rotate angle="0.204" x="0" y="0" z="1"/>
+                    <rotate angle="0.204" x="0" y="0" z="1" />
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
@@ -130,9 +131,9 @@
             <!-- Callisto -->
             <group>
                 <transform>
-                    <translate x="-9.921" y="0" z ="4.778"/>
+                    <translate x="-9.921" y="0" z="4.778" />
                     <scale x="0.377" y="0.377" z="0.377" />
-                    <rotate angle="0.205" x="0" y="0" z="1"/>
+                    <rotate angle="0.205" x="0" y="0" z="1" />
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
@@ -143,21 +144,34 @@
         <!-- Saturn -->
         <group>
             <transform>
-                <translate x="252.054" y="0" z ="0"/>
-                <scale x="9.13" y="9.13" z="9.13" />
-                <rotate angle="27" x="0" y="0" z="1"/>
+                <translate x="252.054" y="0" z="0" />
             </transform>
-            <models>
-                <model file="sphere_1_8_8.3d" />
-            </models>
+            <group>
+                <transform>
+                    <scale x="9.13" y="9.13" z="9.13" />
+                    <rotate angle="27" x="0" y="0" z="1" />
+                </transform>
+                <models>
+                    <model file="sphere_1_15_15.3d" />
+                </models>
+            </group>
+            <group>
+                <transform>
+                    <rotate angle="26.5" x="1" y="0" z="0" />
+                    <scale x="10.975" y="0.00015" z="10.975"/>
+                </transform>
+                <models>
+                    <model file="torus_1,5_0,5_20_10.3d"/>
+                </models>
+            </group>
         </group>
 
         <!-- Uranus -->
         <group>
             <transform>
-                <translate x="396.864" y="0" z ="0"/>
+                <translate x="396.864" y="0" z="0" />
                 <scale x="3.976" y="3.976" z="3.976" />
-                <rotate angle="98" x="0" y="0" z="1"/>
+                <rotate angle="98" x="0" y="0" z="1" />
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" />
@@ -167,9 +181,9 @@
         <!-- Neptune -->
         <group>
             <transform>
-                <translate x="560.028" y="0" z ="0"/>
+                <translate x="560.028" y="0" z="0" />
                 <scale x="3.86" y="3.86" z="3.86" />
-                <rotate angle="30" x="0" y="0" z="1"/>
+                <rotate angle="30" x="0" y="0" z="1" />
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" />
