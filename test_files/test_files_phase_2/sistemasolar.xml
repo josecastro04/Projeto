@@ -1,8 +1,8 @@
 <world>
     <window width="1024" height="768" />
     <camera>
-        <position x="600" y="120" z="0" />
-        <lookAt x="124" y="0" z="0" />
+        <position x="600" y="150" z="400" />
+        <lookAt x="126" y="0" z="0" />
         <up x="0" y="1" z="0" />
         <projection fov="60" near="1" far="1000" />
     </camera>
@@ -58,7 +58,7 @@
             </group>
             <group>
                 <transform>
-                    <translate x="-1.385" y="0" z="0" />
+                    <translate x="-1.311" y="0" z="0" />
                     <scale x="0.272" y="0.272" z="0.272" />
                     <rotate angle="1.54" x="0" y="0" z="1" />
                 </transform>
@@ -98,7 +98,7 @@
             <!-- Europe -->
             <group>
                 <transform>
-                    <translate x="9.921" y="0" z="4.778" />
+                    <translate x="10.142" y="0" z="4.884" />
                     <scale x="0.244" y="0.244" z="0.244" />
                     <rotate angle="0.471" x="0" y="0" z="1" />
                 </transform>
@@ -109,7 +109,7 @@
             <!-- Io -->
             <group>
                 <transform>
-                    <translate x="-5.506" y="0" z="-9.536" />
+                    <translate x="-5.649" y="0" z="-9.784" />
                     <scale x="0.285" y="0.285" z="0.285" />
                     <rotate angle="0.050" x="0" y="0" z="1" />
                 </transform>
@@ -120,7 +120,7 @@
             <!-- Ganymede -->
             <group>
                 <transform>
-                    <translate x="4.214" y="0" z="-10.174" />
+                    <translate x="4.372" y="0" z="-10.555" />
                     <scale x="0.412" y="0.412" z="0.412" />
                     <rotate angle="0.204" x="0" y="0" z="1" />
                 </transform>
@@ -131,7 +131,7 @@
             <!-- Callisto -->
             <group>
                 <transform>
-                    <translate x="-9.921" y="0" z="4.778" />
+                    <translate x="-8.054" y="0" z="8.054" />
                     <scale x="0.377" y="0.377" z="0.377" />
                     <rotate angle="0.205" x="0" y="0" z="1" />
                 </transform>
@@ -161,7 +161,7 @@
                     <scale x="10.975" y="0.00015" z="10.975"/>
                 </transform>
                 <models>
-                    <model file="torus_1,5_0,5_20_10.3d"/>
+                    <model file="torus_1,5_0,5_50_10.3d"/>
                 </models>
             </group>
         </group>
