@@ -8,12 +8,14 @@
 #include <sstream>
 #include <string>
 #include <variant>
+#include <vector>
 #include <math.h>
 #include "TinyXML/tinyxml2.h"
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
 #include <GL/glut.h>
+
 #endif
 
 using namespace std;
@@ -42,13 +44,18 @@ struct Rotate {
 struct Scale {
     float x, y, z;
 };
+struct Anime_Translate{
+    float time;
+    bool align;
+    std::vector<Point> points;
+};
 
-using Transformation = std::variant<Translate, Rotate, Scale>;
+using Transformation = std::variant<Translate, Anime_Translate, Rotate, Scale>;
 
 struct Models {
-    std::list<std::string> model;
-    std::list<Transformation> transformations;
-    std::list<Models> models;
+    std::vector<std::string> model;
+    std::vector<Transformation> transformations;
+    std::vector<Models> models;
 };
 
 
@@ -269,12 +276,34 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models) {
             string name_trans = child->Value();
 
             if (name_trans == "translate") {
-                float x , y , z ;
-                child->QueryFloatAttribute("x", &x);
-                child->QueryFloatAttribute("y", &y);
-                child->QueryFloatAttribute("z", &z);
-                models.transformations.emplace_back(Translate{x, y, z});
+                if(child -> Attribute("time" ) != nullptr)
+                {
+                    float time;
+                    bool align = false;
+                    child->QueryFloatAttribute("time", &time);
+                    const char* align_aux = child->Attribute("align");
+                    if (align_aux && strcmp(align_aux, "true") == 0) {
+                        align = true;
+                    }
 
+                    for(XMLElement *child_time = child->FirstChildElement("point"); child_time; child_time = child_time->NextSiblingElement("point"))
+                    {
+                        float x , y , z ;
+                        child_time->QueryFloatAttribute("x", &x);
+                        child_time->QueryFloatAttribute("y", &y);
+                        child_time->QueryFloatAttribute("z", &z);
+                        models.transformations.emplace_back(Translate{x, y, z});
+                    }
+                    
+                }
+                else
+                {
+                    float x , y , z ;
+                    child->QueryFloatAttribute("x", &x);
+                    child->QueryFloatAttribute("y", &y);
+                    child->QueryFloatAttribute("z", &z);
+                    models.transformations.emplace_back(Translate{x, y, z});
+                }
             }
             else if (name_trans == "rotate") {
                 float angle , x , y , z;
