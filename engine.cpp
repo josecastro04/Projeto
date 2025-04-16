@@ -241,19 +241,12 @@ void processKeys()
     }
     if (keyStates['-'])
     {
-        radius -= 0.01f;
-        if (radius < 3.0f)
-        {
-            radius = 3.0f;
-        }
+        radius -= 1.0f;
+
     }
     if (keyStates['+'])
     {
-        radius += 0.01f;
-        if (radius > 50.0f)
-        {
-            radius = 50.0f;
-        }
+        radius += 1.0f;
     }
 
     SphericalToCartesian();
