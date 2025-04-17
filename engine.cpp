@@ -153,10 +153,109 @@ void drawFigure(string filename)
     glEnd();
     file.close();
 }
+void getCatmullRomPoint(float t, Point p0, Point p1, Point p2, Point p3, Point &res, Point &deriv) {
+    float m[4][4] = {
+        {-0.5f,  1.5f, -1.5f, 0.5f},
+        {1.0f, -2.5f,  2.0f, -0.5f},
+        {-0.5f,  0.0f,  0.5f, 0.0f},
+        {0.0f,  1.0f,  0.0f, 0.0f}
+    };
+
+    float tVec[4] = {t * t * t, t * t, t, 1};
+    float tDeriv[4] = {3 * t * t, 2 * t, 1, 0};
+
+    for (int dim = 0; dim < 3; dim++) {
+        float p[4] = {
+            (dim == 0 ? p0.x : dim == 1 ? p0.y : p0.z),
+            (dim == 0 ? p1.x : dim == 1 ? p1.y : p1.z),
+            (dim == 0 ? p2.x : dim == 1 ? p2.y : p2.z),
+            (dim == 0 ? p3.x : dim == 1 ? p3.y : p3.z)
+        };
+
+        float a[4];
+        for (int i = 0; i < 4; i++) {
+            a[i] = 0;
+            for (int j = 0; j < 4; j++) {
+                a[i] += m[i][j] * p[j];
+            }
+        }
+
+        float val = 0, dVal = 0;
+        for (int i = 0; i < 4; i++) {
+            val += tVec[i] * a[i];
+            dVal += tDeriv[i] * a[i];
+        }
+
+        if (dim == 0) { res.x = val; deriv.x = dVal; }
+        else if (dim == 1) { res.y = val; deriv.y = dVal; }
+        else { res.z = val; deriv.z = dVal; }
+    }
+}
+
+void getGlobalCatmullRomPoint(float gt, const std::vector<Point>& points, Point &res, Point &deriv) {
+    int pointCount = points.size();
+    float t = gt * pointCount; // global t between 0 and pointCount
+    int index = floor(t);
+    t = t - index;
+
+    int indices[4];
+    indices[0] = (index + pointCount - 1) % pointCount;
+    indices[1] = (indices[0] + 1) % pointCount;
+    indices[2] = (indices[1] + 1) % pointCount;
+    indices[3] = (indices[2] + 1) % pointCount;
+
+    getCatmullRomPoint(t, points[indices[0]], points[indices[1]],
+                          points[indices[2]], points[indices[3]], res, deriv);
+}
+
 void applyTransformation(const Transformation& transformation) {
-    if (std::holds_alternative<Translate>(transformation)) {
+    if (std::holds_alternative<Anime_Translate>(transformation)) {
+        const auto& t = std::get<Anime_Translate>(transformation);
+        float elapsed = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+        float timeRatio = fmod(elapsed, t.time) / t.time;
+
+        Point pos, deriv;
+        getGlobalCatmullRomPoint(timeRatio, t.points, pos, deriv);
+
+        glTranslatef(pos.x, pos.y, pos.z);
+
+        if (t.align) {
+            // Normalize derivative
+            float len = sqrt(deriv.x * deriv.x + deriv.y * deriv.y + deriv.z * deriv.z);
+            Point X = { deriv.x / len, deriv.y / len, deriv.z / len };
+
+            Point Y = {0, 1, 0};  // Up vector
+            Point Z = {
+                Y.y * X.z - Y.z * X.y,
+                Y.z * X.x - Y.x * X.z,
+                Y.x * X.y - Y.y * X.x
+            };
+        
+            Y = {
+                X.y * Z.z - X.z * Z.y,
+                X.z * Z.x - X.x * Z.z,
+                X.x * Z.y - X.y * Z.x
+            };
+        
+            float m[16] = {
+                X.x, X.y, X.z, 0,
+                Y.x, Y.y, Y.z, 0,
+                Z.x, Z.y, Z.z, 0,
+                0,   0,   0,   1
+            };
+        
+            glMultMatrixf(m);
+            
+        } else {
+            for (const auto& point : t.points) {
+                glTranslatef(point.x, point.y, point.z);
+            }
+        }
+    } else if (std::holds_alternative<Translate>(transformation)) {
         const auto& t = std::get<Translate>(transformation);
         glTranslatef(t.x, t.y, t.z);
+
+    
     } else if (std::holds_alternative<Rotate>(transformation)) {
         const auto& t = std::get<Rotate>(transformation);
         glRotatef(t.angle, t.x, t.y, t.z);
@@ -278,15 +377,17 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models) {
                     if (align_aux && strcmp(align_aux, "true") == 0) {
                         align = true;
                     }
-
+                    std::vector<Point> points;
                     for(XMLElement *child_time = child->FirstChildElement("point"); child_time; child_time = child_time->NextSiblingElement("point"))
                     {
                         float x , y , z ;
                         child_time->QueryFloatAttribute("x", &x);
                         child_time->QueryFloatAttribute("y", &y);
                         child_time->QueryFloatAttribute("z", &z);
-                        models.transformations.emplace_back(Translate{x, y, z});
+                        points.emplace_back(Point{x, y, z});
+                        
                     }
+                    models.transformations.emplace_back(Anime_Translate{time, align, points});
                     
                 }
                 else
