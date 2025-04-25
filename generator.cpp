@@ -11,7 +11,7 @@ using namespace std;
 ofstream open_file(char *filename){
     ofstream file(filename);
     if(!file){
-         cerr << "Error when trying to open the file" << endl;
+        cerr << "Error when trying to open the file" << endl;
         exit(0);
     }
 
@@ -358,6 +358,149 @@ void generate_cylinder(float radius, float height, int divisions, char *filename
     file.close();
 }
 
+void multMatrixMatrix(float first[4][4], float second[4][4], float result[4][4]){
+    for(int i = 0; i < 4; i++)
+        for(int j = 0; j < 4; j++){
+            result[i][j] = 0;
+            for(int k = 0; k < 4; k++)
+                result[i][j] += first[i][k] * second[k][j];
+        }
+}
+
+void multVectorMatrix(float vector[4], float matrix[4][4], float result[4]){
+    for(int i = 0; i < 4; i++){
+        result[i] = 0;
+        for(int j = 0; j < 4; j++){
+            result[i] += vector[j] * matrix[j][i];
+        }
+    }
+}
+
+void generate_bezier_patch(char* filename, int t, char* filename_destination){
+
+    ifstream file_patch(filename);
+    if(!file_patch){
+        cerr << "Error when trying to open the file" << endl;
+        exit(0);
+    }
+    string line;
+    getline(file_patch, line);
+
+    int n_patches = stoi(line);
+
+    //utilizar vector
+    int patches[n_patches][16];
+
+    for(int i = 0; i < n_patches; i++){
+        getline(file_patch, line);
+        //utilizar substring
+        char line_buffer[line.size() + 1];
+        strcpy(line_buffer, line.c_str());
+        char* token = strtok(line_buffer, ", ");
+        int j = 0;
+        while(token != NULL){
+            patches[i][j++] = stoi(token); 
+            token = strtok(NULL, ", ");
+        }
+    }
+
+    getline(file_patch, line);
+    int n_control_points = stoi(line);
+
+    float control_points[n_control_points][3];
+
+    for(int i = 0; i < n_control_points; i++){
+        getline(file_patch, line);
+        char line_buffer[line.size() + 1];
+        strcpy(line_buffer, line.c_str());
+        char* token = strtok(line_buffer, ", ");
+        int j = 0;
+        while(token != NULL){
+            control_points[i][j++] = stof(token); 
+            token = strtok(NULL, ", ");
+        }
+    }
+
+    file_patch.close();
+
+    float M[4][4] = {{-1, 3, -3, 1},
+                  {3, -6, 3, 0},
+                  {-3, 3, 0, 0},
+                  {1, 0, 0, 0,}
+                };
+
+    float delta = 1.0f / t;
+    float ts[t + 1];
+    for(int i = 0; i <= t; i++){
+        ts[i] = delta * i;
+    }
+
+    ofstream file = open_file(filename_destination);
+    file << 1 << endl;
+    int index;
+    for(int i = 0; i < n_patches; i++){
+        float px[4][4];
+        float py[4][4];
+        float pz[4][4];
+
+        for(int j = 0; j < 4; j++){
+            for(int k = 0; k < 4; k++){
+                px[k][j] = control_points[patches[i][4 * j + k]][0];
+                py[k][j] = control_points[patches[i][4 * j + k]][1];
+                pz[k][j] = control_points[patches[i][4 * j + k]][2];
+            }
+        }
+
+        float aux[4][4];
+        float mx[4][4];
+        float my[4][4];
+        float mz[4][4];
+        multMatrixMatrix(M, px, aux);
+        multMatrixMatrix(aux, M, mx);
+
+        multMatrixMatrix(M, py, aux);
+        multMatrixMatrix(aux, M, my);
+
+        multMatrixMatrix(M, pz, aux);
+        multMatrixMatrix(aux, M, mz);
+
+        float final_points[(t + 1) * (t + 1)][3] = {0};
+
+        for(int j = 0; j <= t; j++){
+            for(int k = 0; k <= t; k++){
+                index = j * (t + 1) + k;
+                float u[4] = {powf(ts[j],3), powf(ts[j],2), ts[j], 1};
+                float v[4] = {powf(ts[k],3), powf(ts[k],2), ts[k], 1};
+
+                float aux_x[4];
+                float aux_y[4];
+                float aux_z[4];
+                multVectorMatrix(u, mx, aux_x);
+                multVectorMatrix(u, my, aux_y);
+                multVectorMatrix(u, mz, aux_z);
+
+                final_points[index][0] = aux_x[0] * v[0] + aux_x[1] * v[1] + aux_x[2] * v[2] + aux_x[3] * v[3];
+                final_points[index][1] = aux_y[0] * v[0] + aux_y[1] * v[1] + aux_y[2] * v[2] + aux_y[3] * v[3];
+                final_points[index][2] = aux_z[0] * v[0] + aux_z[1] * v[1] + aux_z[2] * v[2] + aux_z[3] * v[3];
+            }
+        }
+
+        for(int j = 0; j < t; j++){
+            for(int k = 0; k < t; k++){
+                file << final_points[j * (t + 1) + k][0] << " " << final_points[j * (t + 1) + k][1] << " " << final_points[j * (t + 1) + k][2] << endl;
+                file << final_points[(j + 1) * (t + 1) + k][0] << " " << final_points[(j + 1) * (t + 1) + k][1] << " " << final_points[(j + 1) * (t + 1) + k][2] << endl;
+                file << final_points[(j + 1) * (t + 1) + k + 1][0] << " " << final_points[(j + 1) * (t + 1) + k + 1][1] << " " << final_points[(j + 1) * (t + 1) + k + 1][2] << endl;
+
+                file << final_points[j * (t + 1) + k][0] << " " << final_points[j * (t + 1) + k][1] << " " << final_points[j * (t + 1) + k][2] << endl;
+                file << final_points[(j + 1) * (t + 1) + k + 1][0] << " " << final_points[(j + 1) * (t + 1) + k + 1][1] << " " << final_points[(j + 1) * (t + 1) + k + 1][2] << endl;
+                file << final_points[j * (t + 1) + k + 1][0] << " " << final_points[j * (t + 1) + k + 1][1] << " " << final_points[j * (t + 1) + k + 1][2] << endl;
+            }
+        }
+    }
+    
+    file.close();
+}
+
 int main(int argc, char **argv){
 
     if (strcmp(argv[1], "box") == 0 && argc == 5)
@@ -430,6 +573,10 @@ int main(int argc, char **argv){
         }else{
             generate_cylinder(radius, height, divisions, argv[5]);
         }
+    }else if(strcmp(argv[1], "bezier_patch") == 0 && argc == 5){
+        int t = stoi(argv[3]);
+
+        generate_bezier_patch(argv[2], t, argv[4]);
     }else{
         cout << "Something went wrong" << endl;
     }
