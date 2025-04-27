@@ -1,3 +1,0 @@
-/home/utilizador/Desktop/Universidade/3º ano/cg/Projeto/buil/CMakeFiles/phase1.dir
-/home/utilizador/Desktop/Universidade/3º ano/cg/Projeto/buil/CMakeFiles/edit_cache.dir
-/home/utilizador/Desktop/Universidade/3º ano/cg/Projeto/buil/CMakeFiles/rebuild_cache.dir

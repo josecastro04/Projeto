@@ -17,7 +17,6 @@
 #include <map>
 
 using namespace std;
-std::map<std::string, ModelData> modelCache;
 static float omega = 0.0f, alpha = 0.0f, radius = 5.0f;
 bool keyStates[256] = {false};
 
@@ -33,6 +32,8 @@ struct ModelData
     GLuint vbo[2];
     int vertexCount;
 };
+
+std::map<std::string, ModelData> modelCache;
 
 struct Window
 {
@@ -363,7 +364,9 @@ void drawModel(Models &models)
 
     for (const string &filename : models.model)
     {
+        glPushMatrix();
         drawFigureVBO(filename);
+        glPopMatrix();
     }
 
     for (Models &child : models.models)

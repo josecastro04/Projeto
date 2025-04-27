@@ -1,1 +1,0 @@
-/usr/bin/c++  -Wno-deprecated CMakeFiles/phase1.dir/engine.cpp.o CMakeFiles/phase1.dir/TinyXML/tinyxml2.cpp.o -o phase1  /usr/lib/x86_64-linux-gnu/libGL.so /usr/lib/x86_64-linux-gnu/libGLU.so /usr/lib/x86_64-linux-gnu/libglut.so /usr/lib/x86_64-linux-gnu/libGLEW.so 
