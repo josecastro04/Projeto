@@ -436,7 +436,7 @@ void generate_bezier_patch(char* filename, int t, char* filename_destination){
     }
 
     ofstream file = open_file(filename_destination);
-    file << 1 << endl;
+    file << t * t * 6 * n_patches << endl;
     int index;
     for(int i = 0; i < n_patches; i++){
         float px[4][4];
