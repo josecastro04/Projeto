@@ -79,21 +79,109 @@ struct World {
 
 World world;
 
-float omega = 0.0f, alpha = 0.0f, radius = 5.0f;
-bool keyStates[256] = {false};
+float omega = 0.0f, alpha = 0.0f;
+float k = 0.5;
+
+Point calculateVector(Point L, Point P){
+    return {L.x - P.x,
+            L.y - P.y,
+            L.z - P.z};
+}
+
+Point cross(const Point &a, const Point &b) {
+    return { a.y * b.z - a.z * b.y, 
+             a.z * b.x - a.x * b.z, 
+             a.x * b.y - a.y * b.x };
+}
+
+void normalize(Point &p) {
+    float len = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+    if (len > 0) {
+        p.x /= len;
+        p.y /= len;
+        p.z /= len;
+    }
+}
+
+void SphericalToCartesianFPS() {
+    Point direction;
+    direction.x = cos(alpha) * cos(omega);
+    direction.y = sin(-omega);
+    direction.z = sin(alpha) * cos(omega);
+
+    normalize(direction);
+
+    world.camera.lookAt.x = world.camera.position.x + direction.x;
+    world.camera.lookAt.y = world.camera.position.y + direction.y;
+    world.camera.lookAt.z = world.camera.position.z + direction.z;
+}
+
+
 
 void key_press(unsigned char key, int x, int y) {
-    keyStates[key] = true;
-}
+    Point d = calculateVector(world.camera.lookAt, world.camera.position);
+    if(key == 'e'){
+        alpha += 0.02f;
+        SphericalToCartesianFPS();
+    }
+    if(key == 'q'){
+        alpha -= 0.02f;
+        SphericalToCartesianFPS();
+    }
+    if(key == 'x'){
+        omega += 0.02f;
+        SphericalToCartesianFPS();
+    }
+    if(key == 'z'){
+        omega -= 0.02f;
+        SphericalToCartesianFPS();
+    }
 
-void key_up(unsigned char key, int x, int y) {
-    keyStates[key] = false;
-}
+    if(key == 'w'){
+        world.camera.lookAt.x += k * d.x;
+        world.camera.lookAt.y += k * d.y;
+        world.camera.lookAt.z += k * d.z;
+        world.camera.position.x += k * d.x;
+        world.camera.position.y += k * d.y;
+        world.camera.position.z += k * d.z;
+    }
+    if(key == 's'){ 
+        world.camera.lookAt.x -= k * d.x;
+        world.camera.lookAt.y -= k * d.y;
+        world.camera.lookAt.z -= k * d.z;
+        world.camera.position.x -= k * d.x;
+        world.camera.position.y -= k * d.y;
+        world.camera.position.z -= k * d.z;
+    }
+    if(key == 'd'){
+        Point r = cross(d, world.camera.up);
+        world.camera.lookAt.x += k * r.x;
+        world.camera.lookAt.y += k * r.y;
+        world.camera.lookAt.z += k * r.z;
+        world.camera.position.x += k * r.x;
+        world.camera.position.y += k * r.y;
+        world.camera.position.z += k * r.z;
+    }
+    if(key == 'a'){ 
+        Point r = cross(d, world.camera.up);
+        world.camera.lookAt.x -= k * r.x;
+        world.camera.lookAt.y -= k * r.y;
+        world.camera.lookAt.z -= k * r.z;
+        world.camera.position.x -= k * r.x;
+        world.camera.position.y -= k * r.y;
+        world.camera.position.z -= k * r.z;
+    }
+    if(key =='-'){
+        k /=2;
+        if(k < 0.1) k = 0.1;
+    }
+    if(key == '+'){
+        k *=2;
+        if(k > 25) k = 25;
+    }
 
-void SphericalToCartesian() {
-    world.camera.position.x = radius * cos(omega) * sin(alpha);
-    world.camera.position.y = radius * sin(omega);
-    world.camera.position.z = radius * cos(omega) * cos(alpha);
+    glutPostRedisplay();
+    
 }
 
 void drawAxis() {
@@ -212,21 +300,6 @@ void drawCatmullRomCurve(const vector<Point>& points) {
     glEnd();
 }
 
-void normalize(Point &p) {
-    float len = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
-    if (len > 0) {
-        p.x /= len;
-        p.y /= len;
-        p.z /= len;
-    }
-}
-
-Point cross(const Point &a, const Point &b) {
-    return { a.y * b.z - a.z * b.y, 
-             a.z * b.x - a.x * b.z, 
-             a.x * b.y - a.y * b.x };
-}
-
 void buildRotMatrix(Point x, Point y, Point z, float *m) {
     m[0] = x.x; m[1] = x.y; m[2] = x.z; m[3] = 0;
     m[4] = y.x; m[5] = y.y; m[6] = y.z; m[7] = 0;
@@ -330,24 +403,6 @@ void renderScene() {
     drawModel(world.models);
     
     glutSwapBuffers();
-}
-
-void processKeys() {
-    if (keyStates['w']) {
-        omega += 0.02f;
-        if (omega > M_PI / 2.0f) omega = M_PI / 2.0f - 0.01f;
-    }
-    if (keyStates['s']) {
-        omega -= 0.02f;
-        if (omega < -M_PI / 2.0f) omega = -M_PI / 2.0f + 0.01f;
-    }
-    if (keyStates['a']) alpha -= 0.02f;
-    if (keyStates['d']) alpha += 0.02f;
-    if (keyStates['-']) radius -= 1.0f;
-    if (keyStates['+']) radius += 1.0f;
-
-    SphericalToCartesian();
-    glutPostRedisplay();
 }
 
 void parseGroup(tinyxml2::XMLElement *groupElement, Models &models) {
@@ -484,12 +539,11 @@ void parseInfo(char *filename) {
     }
 
     
-    radius = sqrt(pow(world.camera.position.x, 2) + 
-             pow(world.camera.position.y, 2) + 
-             pow(world.camera.position.z, 2));
+    float radius = sqrt(pow(world.camera.lookAt.x - world.camera.position.x, 2) + 
+             pow(world.camera.lookAt.y - world.camera.position.y, 2) + 
+             pow(world.camera.lookAt.z - world.camera.position.z, 2));
     omega = asin(world.camera.position.y / radius);
-    alpha = atan2(world.camera.position.x, world.camera.position.z);
-
+    alpha = atan2(world.camera.position.x, world.camera.position.z) + M_PI;
 
     XMLElement *group = pRoot->FirstChildElement("group");
     if (group) parseGroup(group, world.models);
@@ -512,9 +566,6 @@ int main(int argc, char **argv) {
     glutDisplayFunc(renderScene);
     glutReshapeFunc(changeSize);
     glutKeyboardFunc(key_press);
-    glutKeyboardUpFunc(key_up);
-    glutIdleFunc(processKeys);
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT, GL_LINE);
