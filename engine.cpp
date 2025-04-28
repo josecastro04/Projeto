@@ -142,39 +142,6 @@ void drawAxis()
     glColor3f(1.0f, 1.0f, 1.0f);
 }
 
-// void drawFigure(string filename)
-//{
-//     ifstream file(filename);
-//     if (!file)
-//     {
-//         cerr << "Error when trying to open the file!" << endl;
-//         exit(0);
-//     }
-//
-//     glBegin(GL_TRIANGLES);
-//     glColor3f(1.0f, 1.0f, 1.0f);
-//     string line;
-//     getline(file, line);
-//     while (getline(file, line))
-//     {
-//         istringstream stream(line);
-//         float x, y, z;
-//
-//         if (!(stream >> x >> y >> z))
-//         {
-//             cerr << "Error when trying to read the values!" << endl;
-//             glEnd();
-//             file.close();
-//             return;
-//         }
-//
-//         glVertex3f(x, y, z);
-//     }
-//
-//     glEnd();
-//     file.close();
-//}
-
 void drawFigureVBO(string filename)
 {
 
@@ -273,36 +240,31 @@ void multMatrixVector(float *m, float *v, float *res)
     }
 }
 
-void getCatmullRomPoint(float t, Point p0, Point p1, Point p2, Point p3, Point *pos, Point *deriv)
+void getCatmullRomPoint(float t, Point p0, Point p1, Point p2, Point p3, float *pos, float *deriv)
 {
 
     float m[16] = {-0.5f, 1.5f, -1.5f, 0.5f,
                    1.0f, -2.5f, 2.0f, -0.5f,
                    -0.5f, 0.0f, 0.5f, 0.0f,
                    0.0f, 1.0f, 0.0f, 0.0f};
-
+    float a[4];
     float T[4] = {t * t * t, t * t, t, 1};
     float dT[4] = {3 * t * t, 2 * t, 1, 0};
+    float p[4][3] = {{p0.x, p0.y, p0.z},
+                     {p1.x, p1.y, p1.z},
+                     {p2.x, p2.y, p2.z},
+                     {p3.x, p3.y, p3.z}};
+    for ( int i = 0; i < 3; i++)
+    {
+        float pp[4] = {p[0][i], p[1][i], p[2][i], p[3][i]};
+        multMatrixVector(m, pp, a);
+        pos[i] = a[0] * T[0] + a[1] * T[1] + a[2] * T[2] + a[3] * T[3];
+        deriv[i] = a[0] * dT[0] + a[1] * dT[1] + a[2] * dT[2] + a[3] * dT[3];
 
-    float px[4] = {p0.x, p1.x, p2.x, p3.x};
-    float py[4] = {p0.y, p1.y, p2.y, p3.y};
-    float pz[4] = {p0.z, p1.z, p2.z, p3.z};
-
-    float a_x[4], a_y[4], a_z[4];
-    multMatrixVector(m, px, a_x);
-    multMatrixVector(m, py, a_y);
-    multMatrixVector(m, pz, a_z);
-
-    pos->x = T[0] * a_x[0] + T[1] * a_x[1] + T[2] * a_x[2] + T[3] * a_x[3];
-    pos->y = T[0] * a_y[0] + T[1] * a_y[1] + T[2] * a_y[2] + T[3] * a_y[3];
-    pos->z = T[0] * a_z[0] + T[1] * a_z[1] + T[2] * a_z[2] + T[3] * a_z[3];
-
-    deriv->x = dT[0] * a_x[0] + dT[1] * a_x[1] + dT[2] * a_x[2] + dT[3] * a_x[3];
-    deriv->y = dT[0] * a_y[0] + dT[1] * a_y[1] + dT[2] * a_y[2] + dT[3] * a_y[3];
-    deriv->z = dT[0] * a_z[0] + dT[1] * a_z[1] + dT[2] * a_z[2] + dT[3] * a_z[3];
+    }
 }
 
-void getGlobalCatmullRomPoint(float gt, const vector<Point> &points, Point *pos, Point *deriv)
+void getGlobalCatmullRomPoint(float gt, const vector<Point> &points, float *pos, float *deriv)
 {
     int point_count = points.size();
     float t = gt * point_count;
@@ -323,103 +285,107 @@ void drawCatmullRomCurve(const vector<Point> &points)
 {
     glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_LINE_LOOP);
-
+    float pos[3], deriv[3];
     for (float gt = 0; gt < 1; gt += 0.01)
     {
-        Point pos, deriv;
-        getGlobalCatmullRomPoint(gt, points, &pos, &deriv);
-        glVertex3f(pos.x, pos.y, pos.z);
+        getGlobalCatmullRomPoint(gt, points, pos, deriv);
+        glVertex3f(pos[0], pos[1], pos[2]);
     }
 
     glEnd();
 }
 
-void normalize(Point &p)
+void normalize(float *p)
 {
-    float len = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
-    if (len > 0)
+    float length = sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+    if (length > 0)
     {
-        p.x /= len;
-        p.y /= len;
-        p.z /= len;
+        p[0] /= length;
+        p[1] /= length;
+        p[2] /= length;
     }
 }
 
-Point cross(const Point &a, const Point &b)
+void cross(float *a, float *b, float *result)
 {
-    return {a.y * b.z - a.z * b.y,
-            a.z * b.x - a.x * b.z,
-            a.x * b.y - a.y * b.x};
+    result[0] = a[1] * b[2] - a[2] * b[1];
+    result[1] = a[2] * b[0] - a[0] * b[2];
+    result[2] = a[0] * b[1] - a[1] * b[0];
 }
 
-void buildRotMatrix(Point x, Point y, Point z, float *m)
+void buildRotMatrix(float *x, float *y, float *z, float *m)
 {
-    m[0] = x.x;
-    m[1] = x.y;
-    m[2] = x.z;
-    m[3] = 0;
-    m[4] = y.x;
-    m[5] = y.y;
-    m[6] = y.z;
-    m[7] = 0;
-    m[8] = z.x;
-    m[9] = z.y;
-    m[10] = z.z;
-    m[11] = 0;
-    m[12] = 0;
-    m[13] = 0;
-    m[14] = 0;
-    m[15] = 1;
+
+        m[0] = x[0];
+        m[1] = x[1];
+        m[2] = x[2];
+        m[3] = 0;
+        m[4] = y[0];
+        m[5] = y[1];
+        m[6] = y[2];
+        m[7] = 0;
+        m[8] = z[0];
+        m[9] = z[1];
+        m[10] = z[2];
+        m[11] = 0;
+        m[12] = 0;
+        m[13] = 0;
+        m[14] = 0;
+        m[15] = 1;
 }
 
-void applyTransformation(const Transformation &transformation)
-{
-    if (const auto *trans = get_if<Anime_Translate>(&transformation.type))
+
+
+    void applyTransformation(const Transformation &transformation)
     {
-        float elapsed = glutGet(GLUT_ELAPSED_TIME) / 1000.0f - transformation.start_time;
-        float gt = fmod(elapsed, trans->time) / trans->time;
-
-        Point pos, deriv;
-        getGlobalCatmullRomPoint(gt, trans->points, &pos, &deriv);
-
-        glTranslatef(pos.x, pos.y, pos.z);
-
-        if (trans->align)
+        if (const auto *trans = get_if<Anime_Translate>(&transformation.type))
         {
-            Point X = deriv;
-            normalize(X);
+            float elapsed = glutGet(GLUT_ELAPSED_TIME) / 1000.0f - transformation.start_time;
+            float gt = fmod(elapsed, trans->time) / trans->time;
 
-            Point Y = {0.0f, 1.0f, 0.0f};
-            Point Z = cross(X, Y);
-            normalize(Z);
+            float pos[3], deriv[3];
+            getGlobalCatmullRomPoint(gt, trans->points, pos, deriv);
 
-            Y = cross(Z, X);
-            normalize(Y);
+            glTranslatef(pos[0], pos[1], pos[2]);
 
-            float m[16];
-            buildRotMatrix(X, Y, Z, m);
-            glMultMatrixf(m);
+            if (trans->align)
+            {
+                float X[3] = {deriv[0], deriv[1], deriv[2]};
+                normalize(X);
+
+                float Y[3] = {0.0f, 1.0f, 0.0f};
+                float Z[3];
+                cross(X, Y, Z);
+
+                normalize(Z);
+
+                cross(Z, X, Y);
+                normalize(Y);
+
+                float m[16];
+                buildRotMatrix(X, Y, Z, m);
+                glMultMatrixf(m);
+            }
+        }
+        else if (const auto *trans = get_if<Translate>(&transformation.type))
+        {
+            glTranslatef(trans->x, trans->y, trans->z);
+        }
+        else if (const auto *trans = get_if<Anime_Rotate>(&transformation.type))
+        {
+            float elapsed = glutGet(GLUT_ELAPSED_TIME) / 1000.0f - transformation.start_time;
+            float angle = 360.0f * fmod(elapsed, trans->time) / trans->time;
+            glRotatef(angle, trans->x, trans->y, trans->z);
+        }
+        else if (const auto *trans = get_if<Rotate>(&transformation.type))
+        {
+            glRotatef(trans->angle, trans->x, trans->y, trans->z);
+        }
+        else if (const auto *trans = get_if<Scale>(&transformation.type))
+        {
+            glScalef(trans->x, trans->y, trans->z);
         }
     }
-    else if (const auto *trans = get_if<Translate>(&transformation.type))
-    {
-        glTranslatef(trans->x, trans->y, trans->z);
-    }
-    else if (const auto *trans = get_if<Anime_Rotate>(&transformation.type))
-    {
-        float elapsed = glutGet(GLUT_ELAPSED_TIME) / 1000.0f - transformation.start_time;
-        float angle = 360.0f * fmod(elapsed, trans->time) / trans->time;
-        glRotatef(angle, trans->x, trans->y, trans->z);
-    }
-    else if (const auto *trans = get_if<Rotate>(&transformation.type))
-    {
-        glRotatef(trans->angle, trans->x, trans->y, trans->z);
-    }
-    else if (const auto *trans = get_if<Scale>(&transformation.type))
-    {
-        glScalef(trans->x, trans->y, trans->z);
-    }
-}
 
 void drawModel(Models &models)
 {
