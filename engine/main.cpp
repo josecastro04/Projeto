@@ -383,7 +383,7 @@ void drawFigureVBO(string filename) {
         glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, n, GL_STATIC_DRAW);
 
-        // Liberar a memÃ³ria alocada
+        
         free(v);
         free(n);
 
