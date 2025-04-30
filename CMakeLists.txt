@@ -25,6 +25,11 @@ if(NOT OPENGL_FOUND)
     message(ERROR " OPENGL not found!")
 endif(NOT OPENGL_FOUND)
 
+
+find_package(GLEW REQUIRED)
+include_directories(${GLEW_INCLUDE_DIRS})
+link_directories(${GLEW_LIBRARY_DIRS})
+
 if(WIN32)
     message(STATUS "Toolkits_DIR set to: " ${TOOLKITS_FOLDER})
     set(TOOLKITS_FOLDER "" CACHE PATH "Path to Toolkits folder")
