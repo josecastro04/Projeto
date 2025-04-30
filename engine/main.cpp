@@ -1,3 +1,9 @@
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#else
+#include <GL/glew.h>
+#include <GL/glut.h>
+#endif
 #include <GL/glut.h>
 #include "transformations.h"
 #include <iostream>
@@ -8,6 +14,9 @@
 #include <vector>
 #include <variant>
 #include <tinyxml2.h>
+#include <map>
+
+
 
 
 
@@ -42,6 +51,15 @@ struct World {
 };
 World world;
 
+struct ModelData
+{
+    GLuint vbo[2];
+    int vertexCount;
+};
+
+std::map<std::string, ModelData> modelCache;
+
+
 Point calculateVector(Point L, Point P){
     return {L.x - P.x,
             L.y - P.y,
@@ -50,9 +68,9 @@ Point calculateVector(Point L, Point P){
 
 void SphericalToCartesianFPS() {
     float direction[3];
-    direction[0] = radius * cos(omega) * sin(alpha);
-    direction[1] = radius * sin(omega);
-    direction[2] = radius * cos(omega) * cos(alpha);
+    direction[0] = cos(alpha) * cos(omega);
+    direction[1] =  sin(-omega);
+    direction[2] = sin(alpha) * cos(omega);
 
     normalize(direction);
 
@@ -62,7 +80,13 @@ void SphericalToCartesianFPS() {
 
 }
 void key_press(unsigned char key, int x, int y) {
-    Point d = calculateVector(world.camera.lookAt, world.camera.position);
+  
+    
+    Point d1 = calculateVector(world.camera.lookAt, world.camera.position);
+    float d[3];
+    d[0] = d1.x;
+    d[1] = d1.y;
+    d[2] = d1.z;
     if(key == 'e'){
         alpha += 0.02f;
         SphericalToCartesianFPS();
@@ -81,41 +105,49 @@ void key_press(unsigned char key, int x, int y) {
     }
 
     if(key == 'w'){
-        world.camera.lookAt.x += k * d.x;
-        world.camera.lookAt.y += k * d.y;
-        world.camera.lookAt.z += k * d.z;
-        world.camera.position.x += k * d.x;
-        world.camera.position.y += k * d.y;
-        world.camera.position.z += k * d.z;
+        world.camera.lookAt.x += k * d[0];
+        world.camera.lookAt.y += k * d[1];
+        world.camera.lookAt.z += k * d[2];
+        world.camera.position.x += k * d[0];
+        world.camera.position.y += k * d[1];
+        world.camera.position.z += k * d[2];
     }
     if(key == 's'){ 
-        world.camera.lookAt.x -= k * d.x;
-        world.camera.lookAt.y -= k * d.y;
-        world.camera.lookAt.z -= k * d.z;
-        world.camera.position.x -= k * d.x;
-        world.camera.position.y -= k * d.y;
-        world.camera.position.z -= k * d.z;
+        world.camera.lookAt.x -= k * d[0];
+        world.camera.lookAt.y -= k * d[1];
+        world.camera.lookAt.z -= k * d[2];
+        world.camera.position.x -= k * d[0];
+        world.camera.position.y -= k * d[1];
+        world.camera.position.z -= k * d[2];
     }
-    if(key == 'd'){
-        float r[3];
-        cross(d, world.camera.up, r);
-        world.camera.lookAt.x += k * r[0];
-        world.camera.lookAt.y += k * r[1];
-        world.camera.lookAt.z += k * r[2];
-        world.camera.position.x += k * r[0];
-        world.camera.position.y += k * r[1];
-        world.camera.position.z += k * r[2];
+    if(key == 'a'){
+        float right[3];
+        float up[3] = {world.camera.up.x, world.camera.up.y, world.camera.up.z}; // (0,1,0) normalmente
+        cross(up, d, right);
+        normalize(right);
+
+        world.camera.position.x += k * right[0];
+        world.camera.position.y += k * right[1];
+        world.camera.position.z += k * right[2];
+        world.camera.lookAt.x += k * right[0];
+        world.camera.lookAt.y += k * right[1];
+        world.camera.lookAt.z += k * right[2];
+
       
     }
-    if(key == 'a'){ 
-        float r[3];
-        cross(world.camera.up, d, r);
-        world.camera.lookAt.x += k * r[0];
-        world.camera.lookAt.y += k * r[1];
-        world.camera.lookAt.z += k * r[2];
-        world.camera.position.x += k * r[0];
-        world.camera.position.y += k * r[1];
-        world.camera.position.z += k * r[2];
+    if(key == 'd'){ 
+        float right[3];
+        float up[3] = {world.camera.up.x, world.camera.up.y, world.camera.up.z}; // (0,1,0) normalmente
+        cross(up, d, right);
+        normalize(right);
+
+        
+        world.camera.position.x -= k * right[0];
+        world.camera.position.y -= k * right[1];
+        world.camera.position.z -= k * right[2];
+        world.camera.lookAt.x -= k * right[0];
+        world.camera.lookAt.y -= k * right[1];
+        world.camera.lookAt.z -= k * right[2];
     }
     if(key =='-'){
         k /=2;
@@ -295,33 +327,88 @@ void parseInfo(char *filename) {
     if (group) parseGroup(group, world.models);
 }
 
-void drawFigure(string filename) {
-    ifstream file(filename);
-    if (!file) {
-        cerr << "Error when trying to open the file!" << endl;
-        exit(0);
-    }
+void drawFigureVBO(string filename) {
+    if (modelCache.find(filename) == modelCache.end())
+    {
 
-    glBegin(GL_TRIANGLES);
-    glColor3f(1.0f, 1.0f, 1.0f);
-    string line;
-    getline(file, line);
-    while (getline(file, line)) {
-        istringstream stream(line);
-        float x, y, z;
-
-        if (!(stream >> x >> y >> z)) {
-            cerr << "Error when trying to read the values!" << endl;
-            glEnd();
-            file.close();
-            return;
+        ifstream file(filename);
+        if (!file)
+        {
+            cerr << "Error when trying to open the file!" << endl;
+            exit(0);
         }
 
-        glVertex3f(x, y, z);
+        int num_vertices = 0;
+        string line;
+        getline(file, line);
+        istringstream stream(line);
+        stream >> num_vertices;
+
+        float *v, *n;
+
+        v = (float *)malloc(sizeof(float) * num_vertices * 3);
+        n = (float *)malloc(sizeof(float) * num_vertices * 3);
+
+        for (int i = 0; i < num_vertices; i++)
+        {
+            getline(file, line);
+            istringstream stream(line);
+            float x, y, z;
+
+            if (!(stream >> x >> y >> z))
+            {
+                cerr << "Error when trying to read the values!" << endl;
+                free(v);
+                free(n);
+                glEnd();
+                file.close();
+                return;
+            }
+
+            v[i * 3] = x;
+            v[i * 3 + 1] = y;
+            v[i * 3 + 2] = z;
+            n[i * 3] = x;
+            n[i * 3 + 1] = y;
+            n[i * 3 + 2] = z;
+        }
+
+        GLuint buffers[2];
+
+        glGenBuffers(2, buffers);
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, v, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, n, GL_STATIC_DRAW);
+
+        // Liberar a memÃ³ria alocada
+        free(v);
+        free(n);
+
+        ModelData data;
+        data.vbo[0] = buffers[0];
+        data.vbo[1] = buffers[1];
+        data.vertexCount = num_vertices;
+        modelCache[filename] = data;
     }
 
-    glEnd();
-    file.close();
+    ModelData &data = modelCache[filename];
+
+    glBindBuffer(GL_ARRAY_BUFFER, data.vbo[0]);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, data.vbo[1]);
+    glNormalPointer(GL_FLOAT, 0, 0);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+
+    glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
+
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 
@@ -343,7 +430,9 @@ void drawModel(Models& models) {
 
    
     for (const string& filename : models.model) {
-        drawFigure(filename);
+        glPushMatrix();
+        drawFigureVBO(filename);
+        glPopMatrix();
     }
 
    
@@ -395,9 +484,12 @@ int main(int argc, char **argv) {
     glutInitWindowSize(world.window.width, world.window.height);
     glutCreateWindow("CG@DI Phase 3");
 
+    glewInit();
+
     glutDisplayFunc(renderScene);
     glutReshapeFunc(changeSize);
     glutKeyboardFunc(key_press);
+    glutIdleFunc(renderScene);
     
 
     glEnable(GL_DEPTH_TEST);
@@ -405,6 +497,10 @@ int main(int argc, char **argv) {
     glPolygonMode(GL_FRONT, GL_LINE);
 
     glutMainLoop();
+
+    for(auto &entry : modelCache) {
+        glDeleteBuffers(2, entry.second.vbo);
+    }
 
     return 0;
 }

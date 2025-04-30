@@ -126,7 +126,7 @@ void applyTransformation(Transformation& transformation) {
 
         
         }
-        transformation.start_time = new_time;
+        
      
     } 
     else if (const auto* trans = get_if<Translate>(&transformation.type)) {
