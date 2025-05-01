@@ -16,13 +16,9 @@
 #include <tinyxml2.h>
 #include <map>
 
-
-
-
-
 using namespace std;
-static float omega = 0.0f, alpha = 0.0f, radius = 5.0f;
-float k = 0.5;
+static float omega, alpha, radius = 5.0f;
+static float k = 0.5f;
 
 struct Models {
     std::vector<std::string> model;
@@ -69,7 +65,7 @@ Point calculateVector(Point L, Point P){
 void SphericalToCartesianFPS() {
     float direction[3];
     direction[0] = cos(alpha) * cos(omega);
-    direction[1] =  sin(-omega);
+    direction[1] =  sin(omega);
     direction[2] = sin(alpha) * cos(omega);
 
     normalize(direction);
@@ -87,6 +83,8 @@ void key_press(unsigned char key, int x, int y) {
     d[0] = d1.x;
     d[1] = d1.y;
     d[2] = d1.z;
+    normalize(d);
+
     if(key == 'e'){
         alpha += 0.02f;
         SphericalToCartesianFPS();
@@ -132,7 +130,6 @@ void key_press(unsigned char key, int x, int y) {
         world.camera.lookAt.x += k * right[0];
         world.camera.lookAt.y += k * right[1];
         world.camera.lookAt.z += k * right[2];
-
       
     }
     if(key == 'd'){ 
@@ -161,9 +158,6 @@ void key_press(unsigned char key, int x, int y) {
     glutPostRedisplay();
     
 }
-
-
-
 
 void drawAxis() {
     glBegin(GL_LINES);
@@ -321,7 +315,8 @@ void parseInfo(char *filename) {
               pow(world.camera.lookAt.y - world.camera.position.y, 2) + 
               pow(world.camera.lookAt.z - world.camera.position.z, 2));
     omega = asin((world.camera.lookAt.y - world.camera.position.y) / radius);
-    alpha = atan2(world.camera.position.x, world.camera.position.z) + M_PI;
+    alpha = atan2(world.camera.lookAt.z - world.camera.position.z, 
+        world.camera.lookAt.x - world.camera.position.x); 
 
     XMLElement *group = pRoot->FirstChildElement("group");
     if (group) parseGroup(group, world.models);
