@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+#ifdef _APPLE_
 #include <GLUT/glut.h>
 #else
 #include <GL/glew.h>
@@ -59,11 +59,25 @@ struct Camera
         float fov, near, far;
     } projection;
 };
+struct Light
+{
+    enum Type
+    {
+        DIRECTIONAL,
+        POINT,
+        SPOT
+    };
+    Type type;
+    float position[4];  // Usado para luzes 'point' e 'spot'
+    float direction[4]; // Usado para luzes 'directional' e 'spot'
+    float cutoff;       // Usado para luzes 'spot'
+};
 
 struct World
 {
     Window window;
     Camera camera;
+    std::vector<Light> lights;
     Models models;
 };
 World world;
@@ -188,7 +202,7 @@ void key_press(unsigned char key, int x, int y)
 
     if (key == 't')
     {
-        
+
         solidMode = !solidMode;
         if (solidMode)
         {
@@ -318,33 +332,48 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                     diffuse->QueryFloatAttribute("R", &m.color.diffuse[0]),
                     diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]),
                     diffuse->QueryFloatAttribute("B", &m.color.diffuse[2]);
+                    m.color.diffuse[0] /= 255.0f;
+                    m.color.diffuse[1] /= 255.0f;
+                    m.color.diffuse[2] /= 255.0f;
+                    m.color.diffuse[3] = 1.0f;    
 
                 XMLElement *ambient = color->FirstChildElement("ambient");
                 if (ambient)
                     ambient->QueryFloatAttribute("R", &m.color.ambient[0]),
                     ambient->QueryFloatAttribute("G", &m.color.ambient[1]),
                     ambient->QueryFloatAttribute("B", &m.color.ambient[2]);
-
+                    m.color.ambient[0] /= 255.0f;
+                    m.color.ambient[1] /= 255.0f;
+                    m.color.ambient[2] /= 255.0f;
+                    m.color.ambient[3] = 1.0f;
                 XMLElement *specular = color->FirstChildElement("specular");
                 if (specular)
                     specular->QueryFloatAttribute("R", &m.color.specular[0]),
                     specular->QueryFloatAttribute("G", &m.color.specular[1]),
                     specular->QueryFloatAttribute("B", &m.color.specular[2]);
+                    m.color.specular[0] /= 255.0f;
+                    m.color.specular[1] /= 255.0f;
+                    m.color.specular[2] /= 255.0f;
+                    m.color.specular[3] = 1.0f;
 
                 XMLElement *emissive = color->FirstChildElement("emissive");
                 if (emissive)
                     emissive->QueryFloatAttribute("R", &m.color.emissive[0]),
                     emissive->QueryFloatAttribute("G", &m.color.emissive[1]),
                     emissive->QueryFloatAttribute("B", &m.color.emissive[2]);
+                    m.color.emissive[0] /= 255.0f;
+                    m.color.emissive[1] /= 255.0f;
+                    m.color.emissive[2] /= 255.0f;
+                    m.color.emissive[3] = 1.0f;
 
                 XMLElement *shininess = color->FirstChildElement("shininess");
                 if (shininess)
                     shininess->QueryFloatAttribute("value", &m.color.shininess);
+                    m.color.shininess /= 128.0f;
             }
 
-            models.model.push_back(m); 
+            models.model.push_back(m);
         }
-        
     }
 
     for (XMLElement *childGroup = groupElement->FirstChildElement("group"); childGroup; childGroup = childGroup->NextSiblingElement("group"))
@@ -422,7 +451,66 @@ void parseInfo(char *filename)
     alpha = atan2(world.camera.lookAt.z - world.camera.position.z,
                   world.camera.lookAt.x - world.camera.position.x);
 
-                  
+    XMLElement *lights = pRoot->FirstChildElement("lights");
+    if (lights)
+    {
+        for (XMLElement *lightElem = lights->FirstChildElement("light"); lightElem; lightElem = lightElem->NextSiblingElement("light"))
+        {
+            Light light; // Cria uma nova luz para cada tag <light>
+
+            const char *type = lightElem->Attribute("type");
+            if (type)
+            {
+                if (strcmp(type, "directional") == 0)
+                {
+                    light.type = Light::DIRECTIONAL;
+                    lightElem->QueryFloatAttribute("dirx", &light.direction[0]);
+                    lightElem->QueryFloatAttribute("diry", &light.direction[1]);
+                    lightElem->QueryFloatAttribute("dirz", &light.direction[2]);
+                    float x = light.direction[0];
+                    float y = light.direction[1];
+                    float z = light.direction[2];
+                    float length = sqrt(x * x + y * y + z * z);
+                    if (length != 0.0f) {
+                        light.direction[0] = x / length;
+                        light.direction[1] = y / length;
+                        light.direction[2] = z / length;
+                    }
+                
+                    light.direction[3] = 0.0f; 
+                }
+                else if (strcmp(type, "point") == 0)
+                {
+                    light.type = Light::POINT;
+                    lightElem->QueryFloatAttribute("posx", &light.position[0]);
+                    lightElem->QueryFloatAttribute("posy", &light.position[1]);
+                    lightElem->QueryFloatAttribute("posz", &light.position[2]);
+                    light.position[3] = 1.0f; // w = 1 (ponto)
+                    
+
+    // Inicializa direção a zero (não usada em point)
+                    light.direction[0] = light.direction[1] = light.direction[2] = 0.0f;
+                    light.direction[3] = 0.0f;
+
+                }
+                else if (strcmp(type, "spot") == 0)
+                {
+                    light.type = Light::SPOT;
+                    lightElem->QueryFloatAttribute("posx", &light.position[0]);
+                    lightElem->QueryFloatAttribute("posy", &light.position[1]);
+                    lightElem->QueryFloatAttribute("posz", &light.position[2]);
+                    light.position[3] = 1.0f; // w = 1 (ponto)
+                    lightElem->QueryFloatAttribute("dirx", &light.direction[0]);
+                    lightElem->QueryFloatAttribute("diry", &light.direction[1]);
+                    lightElem->QueryFloatAttribute("dirz", &light.direction[2]);
+                    lightElem->QueryFloatAttribute("cutoff", &light.cutoff);
+                    light.direction[3] = 0.0f; // w = 0 (direcional)
+                }
+            }
+            world.lights.push_back(light); // Adiciona a luz ao vetor
+        }
+    }
+
     XMLElement *group = pRoot->FirstChildElement("group");
     if (group)
         parseGroup(group, world.models);
@@ -470,9 +558,9 @@ void drawFigureVBO(string filename)
             v[i * 3] = x;
             v[i * 3 + 1] = y;
             v[i * 3 + 2] = z;
-            n[i * 3] = x;
-            n[i * 3 + 1] = y;
-            n[i * 3 + 2] = z;
+            n[i * 3] = 0;
+            n[i * 3 + 1] = 1;
+            n[i * 3 + 2] = 0;
         }
 
         GLuint buffers[2];
@@ -537,7 +625,7 @@ void drawModel(Models &models)
         glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
         glMaterialfv(GL_FRONT, GL_EMISSION, m.color.emissive);
         glMaterialf(GL_FRONT, GL_SHININESS, m.color.shininess);
-
+      
         drawFigureVBO(m.file);
     }
 
@@ -562,6 +650,48 @@ void changeSize(int w, int h)
                    world.camera.projection.near, world.camera.projection.far);
     glMatrixMode(GL_MODELVIEW);
 }
+void luz_ativa() {
+    glEnable(GL_LIGHTING);
+
+    for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i) {
+        GLenum light_id = GL_LIGHT0 + i;
+        Light &light = world.lights[i];
+
+        glEnable(light_id);
+
+        float diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        float ambient[4] = {0.2f, 0.2f, 0.2f, 1.0f};
+        float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        glLightfv(light_id, GL_DIFFUSE, diffuse);
+        glLightfv(light_id, GL_AMBIENT, ambient);
+        glLightfv(light_id, GL_SPECULAR, specular);
+
+        switch (light.type) {
+        case Light::DIRECTIONAL:
+            glLightfv(light_id, GL_POSITION, light.direction); // w = 0 (direcional)
+            break;
+        case Light::POINT: {
+            float position[4] = {light.position[0], light.position[1], light.position[2], 1.0f};
+            glLightfv(light_id, GL_POSITION, position);
+            glLightf(light_id, GL_CONSTANT_ATTENUATION, 1.0f);
+            glLightf(light_id, GL_LINEAR_ATTENUATION, 0.05f);
+            glLightf(light_id, GL_QUADRATIC_ATTENUATION, 0.001f);
+            break;
+        }
+        case Light::SPOT: {
+            float position[4] = {light.position[0], light.position[1], light.position[2], 1.0f};
+            glLightfv(light_id, GL_POSITION, position);
+            glLightfv(light_id, GL_SPOT_DIRECTION, light.direction);
+            glLightf(light_id, GL_SPOT_CUTOFF, light.cutoff);
+            glLightf(light_id, GL_SPOT_EXPONENT, 10.0f);
+            break;
+        }
+        }
+    }
+    
+}
+
 
 void renderScene()
 {
@@ -572,6 +702,12 @@ void renderScene()
     gluLookAt(world.camera.position.x, world.camera.position.y, world.camera.position.z,
               world.camera.lookAt.x, world.camera.lookAt.y, world.camera.lookAt.z,
               world.camera.up.x, world.camera.up.y, world.camera.up.z);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_NORMALIZE);
+    
+    luz_ativa();   
+
+
     drawAxis();
     if (solidMode)
     {
@@ -581,7 +717,6 @@ void renderScene()
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-   
 
     drawModel(world.models);
 
@@ -613,8 +748,11 @@ int main(int argc, char **argv)
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+    
+    for (int i = 0; i < world.lights.size(); i++)
+    {
+        glEnable(GL_LIGHT0 + i);
+    }
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
