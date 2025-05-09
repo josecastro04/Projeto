@@ -20,6 +20,8 @@ using namespace std;
 bool solidMode = false;
 static float omega, alpha, radius = 5.0f;
 static float k = 0.5f;
+unsigned int figure = 0;
+int i = 1;
 
 struct Color
 {
@@ -600,7 +602,7 @@ void drawFigureVBO(string filename)
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void drawModel(Models &models)
+void drawModel(Models &models, bool colorPicking = false)
 {
     glPushMatrix();
     for (const auto &transformation : models.transformations)
@@ -619,22 +621,66 @@ void drawModel(Models &models)
 
     for (const Model &m : models.model)
     {
-
         glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
         glMaterialfv(GL_FRONT, GL_AMBIENT, m.color.ambient);
         glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
         glMaterialfv(GL_FRONT, GL_EMISSION, m.color.emissive);
         glMaterialf(GL_FRONT, GL_SHININESS, m.color.shininess);
-      
+        
+        if(colorPicking){
+            float color = (float)i / 255.0f;
+            glColor3f(color, color, color);
+            i++;
+        }
         drawFigureVBO(m.file);
     }
 
     for (Models &child : models.models)
     {
-        drawModel(child);
+        drawModel(child, true);
     }
 
     glPopMatrix();
+}
+
+unsigned char picking(int x, int y){
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+
+    unsigned char res[4];
+    GLint viewport[4];
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+    gluLookAt(world.camera.position.x, world.camera.position.y, world.camera.position.z,
+        world.camera.lookAt.x, world.camera.lookAt.y, world.camera.lookAt.z,
+        world.camera.up.x, world.camera.up.y, world.camera.up.z);
+    glDepthFunc(GL_LEQUAL);
+
+    drawModel(world.models, true);
+    glDepthFunc(GL_LESS);
+
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glReadPixels(x, viewport[3] - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, res);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+
+    return res[0];
+}
+
+void processMouseButtons(int button, int state, int xx, int yy){
+    if(state == GLUT_DOWN){
+        if(button == GLUT_RIGHT_BUTTON){
+            i = 1;
+            figure = picking(xx, yy);
+            figure ? 
+                printf("Figure Selected %d\n", figure)
+                :
+                printf("Nothing Selected\n");
+            glutPostRedisplay();
+        }
+    }
 }
 
 void changeSize(int w, int h)
@@ -745,6 +791,7 @@ int main(int argc, char **argv)
     glutReshapeFunc(changeSize);
     glutKeyboardFunc(key_press);
     glutIdleFunc(renderScene);
+    glutMouseFunc(processMouseButtons);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
