@@ -22,6 +22,9 @@ static float omega, alpha, radius = 5.0f;
 static float k = 0.5f;
 unsigned int figure = 0;
 int i = 1;
+static int mouseX = 0, mouseY = 0;
+static float zoomFactor = 1.0f;
+static bool mouseLeftDown = false, mouseRightDown = false;
 
 struct Color
 {
@@ -672,9 +675,35 @@ unsigned char picking(int x, int y)
 
 void processMouseButtons(int button, int state, int xx, int yy)
 {
+    if (button == GLUT_LEFT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            mouseLeftDown = true;
+            mouseX = xx;
+            mouseY = yy;
+        }
+        else if (state == GLUT_UP)
+        {
+            mouseLeftDown = false;
+        }
+    }
+    else if (button == GLUT_RIGHT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            mouseRightDown = true;
+            mouseX = xx;
+            mouseY = yy;
+        }
+        else if (state == GLUT_UP)
+        {
+            mouseRightDown = false;
+        }
+    }
     if (state == GLUT_DOWN)
     {
-        if (button == GLUT_RIGHT_BUTTON)
+        if (button == GLUT_LEFT_BUTTON)
         {
             i = 1;
             figure = picking(xx, yy);
@@ -736,6 +765,35 @@ void processMouseButtons(int button, int state, int xx, int yy)
     }
 }
 
+void processMouseMotion(int xx, int yy)
+{
+    if (mouseLeftDown)
+    {
+        // Calcula a diferença de movimento
+        int deltaX = xx - mouseX;
+        int deltaY = yy - mouseY;
+
+        // Atualiza os ângulos da câmera
+        alpha += deltaX * 0.005f;
+        omega += deltaY * 0.005f;
+
+        // Limita o ângulo vertical para evitar inversões
+        if (omega > M_PI / 2)
+            omega = M_PI / 2;
+        if (omega < -M_PI / 2)
+            omega = -M_PI / 2;
+
+        // Atualiza a posição da câmera
+        SphericalToCartesianFPS();
+    }
+
+    // Atualiza a posição do rato para o próximo evento
+    mouseX = xx;
+    mouseY = yy;
+
+    glutPostRedisplay();
+}
+
 void changeSize(int w, int h)
 {
     if (h == 0)
@@ -756,7 +814,6 @@ void luz_ativa()
     for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i)
     {
         GLenum light_id = GL_LIGHT0 + i;
-        Light &light = world.lights[i];
 
         // Set light type (directional, point, or spot)
         Light &light = world.lights[i];
@@ -858,6 +915,8 @@ int main(int argc, char **argv)
     glutKeyboardFunc(key_press);
     glutIdleFunc(renderScene);
     glutMouseFunc(processMouseButtons);
+    glutMotionFunc(processMouseMotion);
+    
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
