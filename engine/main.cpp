@@ -756,7 +756,6 @@ void luz_ativa()
     for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i)
     {
         GLenum light_id = GL_LIGHT0 + i;
-        Light &light = world.lights[i];
 
         // Set light type (directional, point, or spot)
         Light &light = world.lights[i];
