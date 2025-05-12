@@ -654,43 +654,30 @@ void luz_ativa() {
     glEnable(GL_LIGHTING);
 
     for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i) {
-        GLenum light_id = GL_LIGHT0 + i;
-        Light &light = world.lights[i];
+        glEnable(GL_LIGHT0 + i); // Enable light
 
-        glEnable(light_id);
+        // Set light type (directional, point, or spot)
+        Light& light = world.lights[i];
+        GLfloat lightPos[4] = { light.position[0], light.position[1], light.position[2], light.position[3] };
+        GLfloat lightDir[4] = { light.direction[0], light.direction[1], light.direction[2], light.direction[3] };
 
-        float diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        float ambient[4] = {0.2f, 0.2f, 0.2f, 1.0f};
-        float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-
-        glLightfv(light_id, GL_DIFFUSE, diffuse);
-        glLightfv(light_id, GL_AMBIENT, ambient);
-        glLightfv(light_id, GL_SPECULAR, specular);
-
-        switch (light.type) {
-        case Light::DIRECTIONAL:
-            glLightfv(light_id, GL_POSITION, light.direction); // w = 0 (direcional)
-            break;
-        case Light::POINT: {
-            float position[4] = {light.position[0], light.position[1], light.position[2], 1.0f};
-            glLightfv(light_id, GL_POSITION, position);
-            glLightf(light_id, GL_CONSTANT_ATTENUATION, 1.0f);
-            glLightf(light_id, GL_LINEAR_ATTENUATION, 0.05f);
-            glLightf(light_id, GL_QUADRATIC_ATTENUATION, 0.001f);
-            break;
+        // Set position or direction based on the light type
+        if (light.type == Light::DIRECTIONAL) {
+            glLightfv(GL_LIGHT0 + i, GL_POSITION, lightDir); // Direction for directional light
+        } else {
+            glLightfv(GL_LIGHT0 + i, GL_POSITION, lightPos); // Position for point/spot light
         }
-        case Light::SPOT: {
-            float position[4] = {light.position[0], light.position[1], light.position[2], 1.0f};
-            glLightfv(light_id, GL_POSITION, position);
-            glLightfv(light_id, GL_SPOT_DIRECTION, light.direction);
-            glLightf(light_id, GL_SPOT_CUTOFF, light.cutoff);
-            glLightf(light_id, GL_SPOT_EXPONENT, 10.0f);
-            break;
+
+        // Additional settings for spotlights
+        if (light.type == Light::SPOT) {
+            glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, lightDir);
+            glLightf(GL_LIGHT0 + i, GL_SPOT_CUTOFF, light.cutoff);
         }
-        }
+
+       
     }
-    
 }
+
 
 
 void renderScene()
@@ -707,8 +694,9 @@ void renderScene()
     
     luz_ativa();   
 
-
+    glDisable(GL_LIGHTING);
     drawAxis();
+    glEnable(GL_LIGHTING);
     if (solidMode)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
