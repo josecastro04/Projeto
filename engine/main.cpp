@@ -20,6 +20,8 @@ using namespace std;
 bool solidMode = false;
 static float omega, alpha, radius = 5.0f;
 static float k = 0.5f;
+unsigned int figure = 0;
+int i = 1;
 
 struct Color
 {
@@ -330,46 +332,46 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 XMLElement *diffuse = color->FirstChildElement("diffuse");
                 if (diffuse)
                     diffuse->QueryFloatAttribute("R", &m.color.diffuse[0]),
-                    diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]),
-                    diffuse->QueryFloatAttribute("B", &m.color.diffuse[2]);
-                    m.color.diffuse[0] /= 255.0f;
-                    m.color.diffuse[1] /= 255.0f;
-                    m.color.diffuse[2] /= 255.0f;
-                    m.color.diffuse[3] = 1.0f;    
+                        diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]),
+                        diffuse->QueryFloatAttribute("B", &m.color.diffuse[2]);
+                m.color.diffuse[0] /= 255.0f;
+                m.color.diffuse[1] /= 255.0f;
+                m.color.diffuse[2] /= 255.0f;
+                m.color.diffuse[3] = 1.0f;
 
                 XMLElement *ambient = color->FirstChildElement("ambient");
                 if (ambient)
                     ambient->QueryFloatAttribute("R", &m.color.ambient[0]),
-                    ambient->QueryFloatAttribute("G", &m.color.ambient[1]),
-                    ambient->QueryFloatAttribute("B", &m.color.ambient[2]);
-                    m.color.ambient[0] /= 255.0f;
-                    m.color.ambient[1] /= 255.0f;
-                    m.color.ambient[2] /= 255.0f;
-                    m.color.ambient[3] = 1.0f;
+                        ambient->QueryFloatAttribute("G", &m.color.ambient[1]),
+                        ambient->QueryFloatAttribute("B", &m.color.ambient[2]);
+                m.color.ambient[0] /= 255.0f;
+                m.color.ambient[1] /= 255.0f;
+                m.color.ambient[2] /= 255.0f;
+                m.color.ambient[3] = 1.0f;
                 XMLElement *specular = color->FirstChildElement("specular");
                 if (specular)
                     specular->QueryFloatAttribute("R", &m.color.specular[0]),
-                    specular->QueryFloatAttribute("G", &m.color.specular[1]),
-                    specular->QueryFloatAttribute("B", &m.color.specular[2]);
-                    m.color.specular[0] /= 255.0f;
-                    m.color.specular[1] /= 255.0f;
-                    m.color.specular[2] /= 255.0f;
-                    m.color.specular[3] = 1.0f;
+                        specular->QueryFloatAttribute("G", &m.color.specular[1]),
+                        specular->QueryFloatAttribute("B", &m.color.specular[2]);
+                m.color.specular[0] /= 255.0f;
+                m.color.specular[1] /= 255.0f;
+                m.color.specular[2] /= 255.0f;
+                m.color.specular[3] = 1.0f;
 
                 XMLElement *emissive = color->FirstChildElement("emissive");
                 if (emissive)
                     emissive->QueryFloatAttribute("R", &m.color.emissive[0]),
-                    emissive->QueryFloatAttribute("G", &m.color.emissive[1]),
-                    emissive->QueryFloatAttribute("B", &m.color.emissive[2]);
-                    m.color.emissive[0] /= 255.0f;
-                    m.color.emissive[1] /= 255.0f;
-                    m.color.emissive[2] /= 255.0f;
-                    m.color.emissive[3] = 1.0f;
+                        emissive->QueryFloatAttribute("G", &m.color.emissive[1]),
+                        emissive->QueryFloatAttribute("B", &m.color.emissive[2]);
+                m.color.emissive[0] /= 255.0f;
+                m.color.emissive[1] /= 255.0f;
+                m.color.emissive[2] /= 255.0f;
+                m.color.emissive[3] = 1.0f;
 
                 XMLElement *shininess = color->FirstChildElement("shininess");
                 if (shininess)
                     shininess->QueryFloatAttribute("value", &m.color.shininess);
-                    m.color.shininess /= 128.0f;
+                m.color.shininess /= 128.0f;
             }
 
             models.model.push_back(m);
@@ -471,13 +473,14 @@ void parseInfo(char *filename)
                     float y = light.direction[1];
                     float z = light.direction[2];
                     float length = sqrt(x * x + y * y + z * z);
-                    if (length != 0.0f) {
+                    if (length != 0.0f)
+                    {
                         light.direction[0] = x / length;
                         light.direction[1] = y / length;
                         light.direction[2] = z / length;
                     }
-                
-                    light.direction[3] = 0.0f; 
+
+                    light.direction[3] = 0.0f;
                 }
                 else if (strcmp(type, "point") == 0)
                 {
@@ -486,12 +489,10 @@ void parseInfo(char *filename)
                     lightElem->QueryFloatAttribute("posy", &light.position[1]);
                     lightElem->QueryFloatAttribute("posz", &light.position[2]);
                     light.position[3] = 1.0f; // w = 1 (ponto)
-                    
 
-    // Inicializa direção a zero (não usada em point)
+                    // Inicializa direção a zero (não usada em point)
                     light.direction[0] = light.direction[1] = light.direction[2] = 0.0f;
                     light.direction[3] = 0.0f;
-
                 }
                 else if (strcmp(type, "spot") == 0)
                 {
@@ -600,7 +601,7 @@ void drawFigureVBO(string filename)
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void drawModel(Models &models)
+void drawModel(Models &models, bool colorPicking = false)
 {
     glPushMatrix();
     for (const auto &transformation : models.transformations)
@@ -619,22 +620,120 @@ void drawModel(Models &models)
 
     for (const Model &m : models.model)
     {
-
         glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
         glMaterialfv(GL_FRONT, GL_AMBIENT, m.color.ambient);
         glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
         glMaterialfv(GL_FRONT, GL_EMISSION, m.color.emissive);
         glMaterialf(GL_FRONT, GL_SHININESS, m.color.shininess);
-      
+
+        if (colorPicking)
+        {
+            float color = (float)i / 255.0f;
+            glColor3f(color, color, color);
+            i++;
+        }
         drawFigureVBO(m.file);
     }
 
     for (Models &child : models.models)
     {
-        drawModel(child);
+        drawModel(child, true);
     }
 
     glPopMatrix();
+}
+
+unsigned char picking(int x, int y)
+{
+
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+
+    unsigned char res[4];
+    GLint viewport[4];
+    glClear(GL_COLOR_BUFFER_BIT);
+    glLoadIdentity();
+    gluLookAt(world.camera.position.x, world.camera.position.y, world.camera.position.z,
+              world.camera.lookAt.x, world.camera.lookAt.y, world.camera.lookAt.z,
+              world.camera.up.x, world.camera.up.y, world.camera.up.z);
+    glDepthFunc(GL_LEQUAL);
+
+    drawModel(world.models, true);
+    glDepthFunc(GL_LESS);
+
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glReadPixels(x, viewport[3] - y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, res);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_TEXTURE_2D);
+
+    return res[0];
+}
+
+void processMouseButtons(int button, int state, int xx, int yy)
+{
+    if (state == GLUT_DOWN)
+    {
+        if (button == GLUT_RIGHT_BUTTON)
+        {
+            i = 1;
+            figure = picking(xx, yy);
+            switch (figure)
+            {
+            case 1:
+                cout << "Sol Clicado" << endl;
+                break;
+            case 2:
+                cout << "Mercúrio Clicado" << endl;
+                break;
+            case 3:
+                cout << "Vénus Clicado" << endl;
+                break;
+            case 4:
+                cout << "Terra Clicada" << endl;
+                break;
+            case 5:
+                cout << "Lua Clicada" << endl;
+                break;
+            case 6:
+                cout << "Marte Clicado" << endl;
+                break;
+            case 7:
+                cout << "Jupiter Clicado" << endl;
+                break;
+            case 8:
+                cout << "Io Clicado" << endl;
+                break;
+            case 9:
+                cout << "Europa Clicado" << endl;
+                break;
+            case 10:
+                cout << "Ganimedes Clicado" << endl;
+                break;
+            case 11:
+                cout << "Calisto Clicado" << endl;
+                break;
+            case 12:
+                cout << "Saturno Clicado" << endl;
+                break;
+            case 13:
+                cout << "Aneis de Saturno Clicados" << endl;
+                break;
+            case 14:
+                cout << "Urano Clicado" << endl;
+                break;
+            case 15:
+                cout << "Neptuno Clicado" << endl;
+                break;
+            case 16:
+                cout << "Cometa Halley Clicado" << endl;
+                break;
+            default:
+                cout << "Nada" << endl;
+            }
+            glutPostRedisplay();
+        }
+    }
 }
 
 void changeSize(int w, int h)
@@ -650,35 +749,61 @@ void changeSize(int w, int h)
                    world.camera.projection.near, world.camera.projection.far);
     glMatrixMode(GL_MODELVIEW);
 }
-void luz_ativa() {
+void luz_ativa()
+{
     glEnable(GL_LIGHTING);
 
-    for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i) {
-        glEnable(GL_LIGHT0 + i); // Enable light
+    for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i)
+    {
+        GLenum light_id = GL_LIGHT0 + i;
+        Light &light = world.lights[i];
 
         // Set light type (directional, point, or spot)
-        Light& light = world.lights[i];
-        GLfloat lightPos[4] = { light.position[0], light.position[1], light.position[2], light.position[3] };
-        GLfloat lightDir[4] = { light.direction[0], light.direction[1], light.direction[2], light.direction[3] };
+        Light &light = world.lights[i];
+        GLfloat lightPos[4] = {light.position[0], light.position[1], light.position[2], light.position[3]};
+        GLfloat lightDir[4] = {light.direction[0], light.direction[1], light.direction[2], light.direction[3]};
 
-        // Set position or direction based on the light type
-        if (light.type == Light::DIRECTIONAL) {
-            glLightfv(GL_LIGHT0 + i, GL_POSITION, lightDir); // Direction for directional light
-        } else {
-            glLightfv(GL_LIGHT0 + i, GL_POSITION, lightPos); // Position for point/spot light
+        float diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        float ambient[4] = {0.2f, 0.2f, 0.2f, 1.0f};
+        float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+        glLightfv(light_id, GL_DIFFUSE, diffuse);
+        glLightfv(light_id, GL_AMBIENT, ambient);
+        glLightfv(light_id, GL_SPECULAR, specular);
+
+        switch (light.type)
+        {
+        case Light::DIRECTIONAL:
+            glLightfv(light_id, GL_POSITION, light.direction); // w = 0 (direcional)
+            break;
+        case Light::POINT:
+        {
+            float position[4] = {light.position[0], light.position[1], light.position[2], 1.0f};
+            glLightfv(light_id, GL_POSITION, position);
+            glLightf(light_id, GL_CONSTANT_ATTENUATION, 1.0f);
+            glLightf(light_id, GL_LINEAR_ATTENUATION, 0.05f);
+            glLightf(light_id, GL_QUADRATIC_ATTENUATION, 0.001f);
+            break;
+        }
+        case Light::SPOT:
+        {
+            float position[4] = {light.position[0], light.position[1], light.position[2], 1.0f};
+            glLightfv(light_id, GL_POSITION, position);
+            glLightfv(light_id, GL_SPOT_DIRECTION, light.direction);
+            glLightf(light_id, GL_SPOT_CUTOFF, light.cutoff);
+            glLightf(light_id, GL_SPOT_EXPONENT, 10.0f);
+            break;
         }
 
-        // Additional settings for spotlights
-        if (light.type == Light::SPOT) {
-            glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, lightDir);
-            glLightf(GL_LIGHT0 + i, GL_SPOT_CUTOFF, light.cutoff);
+            // Additional settings for spotlights
+            if (light.type == Light::SPOT)
+            {
+                glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, lightDir);
+                glLightf(GL_LIGHT0 + i, GL_SPOT_CUTOFF, light.cutoff);
+            }
         }
-
-       
     }
 }
-
-
 
 void renderScene()
 {
@@ -691,10 +816,9 @@ void renderScene()
               world.camera.up.x, world.camera.up.y, world.camera.up.z);
     glEnable(GL_LIGHTING);
     glEnable(GL_NORMALIZE);
-    
-    luz_ativa();   
 
-    glDisable(GL_LIGHTING);
+    luz_ativa();
+
     drawAxis();
     glEnable(GL_LIGHTING);
     if (solidMode)
@@ -733,10 +857,11 @@ int main(int argc, char **argv)
     glutReshapeFunc(changeSize);
     glutKeyboardFunc(key_press);
     glutIdleFunc(renderScene);
+    glutMouseFunc(processMouseButtons);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    
+
     for (int i = 0; i < world.lights.size(); i++)
     {
         glEnable(GL_LIGHT0 + i);
