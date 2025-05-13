@@ -396,6 +396,9 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     float previous_coordinates[divisions + 1][3];
     memcpy(previous_coordinates, coordinates, sizeof(coordinates));
     float rotation_matrix_y[4][4] = {0};
+    float vector1[3];
+    float vector2[3];
+    float normal[3];
     for(int i = 0; i < slices; i++){
         generate_rotation_matrix_y(rotation_matrix_y, angle * (i + 1));
 
@@ -404,12 +407,36 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
 
         for(int j = 0; j < divisions; j++){
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
+            calculate_vectors(previous_coordinates[j], previous_coordinates[j + 1], next_coordinates[j]);
+            croos(vector1, vector2, normal);
+            normalize(normal);
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << next_coordinates[j + 1][0] << " " << next_coordinates[j + 1][1] << " " << next_coordinates[j + 1][2] << "\n";
+            calculate_vectors(next_coordinates[j + 1], previous_coordinates[j + 1], next_coordinates[j]);
+            croos(vector1, vector2, normal);
+            normalize(normal);
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << previous_coordinates[j + 1][0] << " " << previous_coordinates[j + 1][1] << " " << previous_coordinates[j + 1][2] << "\n";
+            calculate_vectors(previous_coordinates[j + 1], previous_coordinates[j + 1], next_coordinates[j + 1]);
+            croos(vector1, vector2, normal);
+            normalize(normal);
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
 
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
+            calculate_vectors(previous_coordinates[j], previous_coordinates[j + 1], next_coordinates[j]);
+            croos(vector1, vector2, normal);
+            normalize(normal);
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << next_coordinates[j][0] << " " << next_coordinates[j][1] << " " << next_coordinates[j][2] << "\n";
+            calculate_vectors(new_coordinates[j], new_coordinates[j + 1], previous_coordinates[j]);
+            croos(vector1, vector2, normal);
+            normalize(normal);
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << next_coordinates[j + 1][0] << " " << next_coordinates[j + 1][1] << " " << next_coordinates[j + 1][2] << "\n";
+            calculate_vectors(next_coordinates[j], previous_coordinates[j + 1], next_coordinates[j]);
+            croos(vector1, vector2, normal);
+            normalize(normal);
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
         }
         memcpy(previous_coordinates, next_coordinates, sizeof(next_coordinates));
 
