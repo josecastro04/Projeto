@@ -17,20 +17,51 @@ ofstream open_file(char *filename){
 
     return file;
 }
-void write_points_plane(ofstream &file, int points, int points_per_row, float coordinates[][3], int divisions)
+
+void normalize(float *p) {
+    float len = sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]);
+    if (len > 0) {
+        p[0] /= len;
+        p[1] /= len;
+        p[2] /= len;
+    }
+}
+void cross(float *a, float *b, float *res) {
+   res[0] = a[1] * b[2] - a[2] * b[1];
+   res[1] = a[2] * b[0] - a[0] * b[2];
+   res[2] = a[0] * b[1] - a[1] * b[0] ;
+    
+}
+
+void calculate_vectors(float p1[3], float p2[3], float p3[3], float *v1, float *v2){
+    v1[0] = p2[0] - p1[0];
+    v1[1] = p2[1] - p1[1];
+    v1[2] = p2[2] - p1[2];
+
+    v2[0] = p3[0] - p1[0];
+    v2[1] = p3[1] - p1[1];
+    v2[2] = p3[2] - p1[2];
+}
+
+void write_points_plane(ofstream &file, int points, int points_per_row, float coordinates[][3], int divisions, float normal[3])
 {
     for (int i = 0; i < divisions; i++){
         int points = i * points_per_row;
         for(int j = 0; j < divisions; j++){
             int index = points + j;
             file << coordinates[index][0] << " " << coordinates[index][1] << " " << coordinates[index][2] << "\n";
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << coordinates[index + points_per_row][0] << " " << coordinates[index + points_per_row][1] << " " << coordinates[index + points_per_row][2] << "\n";
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << coordinates[index + points_per_row + 1][0] << " " << coordinates[index + points_per_row + 1][1] << " " << coordinates[index + points_per_row + 1][2] << "\n";
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
 
             file << coordinates[index][0] << " " << coordinates[index][1] << " " << coordinates[index][2] << "\n";
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << coordinates[index + points_per_row + 1][0] << " " << coordinates[index + points_per_row + 1][1] << " " << coordinates[index + points_per_row + 1][2] << "\n";
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
             file << coordinates[index + 1][0] << " " << coordinates[index + 1][1] << " " << coordinates[index + 1][2] << "\n";
-
+            file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
         }
     }
 }
@@ -87,9 +118,14 @@ void generate_plane(float length, int divisions, char *filename)
     file << total_points << "\n";
     int points = points_per_row * points_per_row;
     float coordinates[points][3];
-
+    float normal[3];
+    float vector1[3];
+    float vector2[3];
     generate_points_plane(coordinates, start, 0, points, points_per_row, distance);
-    write_points_plane(file, points, points_per_row, coordinates, divisions);
+    calculate_vectors(coordinates[0], coordinates[points_per_row], coordinates[1], vector1, vector2);
+    cross(vector1, vector2, normal);
+    normalize(normal);
+    write_points_plane(file, points, points_per_row, coordinates, divisions, normal);
 
     file.close();
 }
@@ -124,20 +160,28 @@ void generate_box(float length, int divisions, char *filename)
     int points = points_per_row * points_per_row;
 
     float coordinates[points][3];
+    float normal[3];
+    float vector1[3];
+    float vector2[3];
 
     generate_points_plane(coordinates, start, -start, points, points_per_row, distance);
-    write_points_plane(file, points, points_per_row, coordinates, divisions);
+    calculate_vectors(coordinates[0], coordinates[points_per_row], coordinates[1], vector1, vector2);
+    cross(vector1, vector2, normal);
+    normalize(normal);
+    write_points_plane(file, points, points_per_row, coordinates, divisions, normal);
 
     float rotation_matrix_z[4][4] = {0};
-
+    float temp_normal[1][3] =  {{normal[0], normal[1], normal[2]}};
     for (int i = 1; i < 4; i++){
         generate_rotation_matrix_z(rotation_matrix_z, i * M_PI / 2);
 
         float coordinates_rotation[points][3];
-
         apply_rotation(rotation_matrix_z, coordinates, coordinates_rotation, points);
+        
+        float temp_normal_rotation[1][3];
 
-        write_points_plane(file, points, points_per_row, coordinates_rotation, divisions);
+        apply_rotation(rotation_matrix_z, temp_normal, temp_normal_rotation, 1);
+        write_points_plane(file, points, points_per_row, coordinates_rotation, divisions, temp_normal_rotation[0]);
     }
 
     float rotation_matrix_x[4][4] = {0};
@@ -147,7 +191,14 @@ void generate_box(float length, int divisions, char *filename)
         float coordinates_rotation[points][3];
 
         apply_rotation(rotation_matrix_x, coordinates, coordinates_rotation, points);
-        write_points_plane(file, points, points_per_row, coordinates_rotation, divisions);
+
+        float temp_normal_rotation[1][3];
+
+        apply_rotation(rotation_matrix_x, temp_normal, temp_normal_rotation, 1);
+        normal[0] = temp_normal_rotation[0][0];
+        normal[1] = temp_normal_rotation[0][1];
+        normal[2] = temp_normal_rotation[0][2];
+        write_points_plane(file, points, points_per_row, coordinates_rotation, divisions, temp_normal_rotation[0]);
     }
 
     file.close();
@@ -180,14 +231,42 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
             z3 = radius * cos(i * slices_angle) * cos(M_PI_2 - stacks_angle * (j + 1));
             z4 = radius * cos((i + 1) * slices_angle) * cos(M_PI_2 - stacks_angle * (j + 1));
 
-            file << x1 << " " << y1 << " " << z1 << "\n";
-            file << x3 << " " << y2 << " " << z3 << "\n";
-            file << x4 << " " << y2 << " " << z4 << "\n";
+            float vector1[3];
+            float vector2[3];
+            float normal1[3];
+            float normal2[3];
+            float normal3[3];
+            float normal4[3];
+
+            calculate_vectors({x1, y1, z1}, {x3, y2, z3}, {x2, y1, z2}, vector1, vector2);
+            cross(vector1, vector2, normal1);
+            normalize(normal1);
+
+            calculate_vectors({x2, y1, z2}, {x1, y1, z1}, {x4, y2, z4}, vector1, vector2);
+            cross(vector1, vector2, normal2);
+            normalize(normal2);
+
+            calculate_vectors({x3, y2, z3}, {x4, y2, z4}, {x1, y1, z1}, vector1, vector2);
+            cross(vector1, vector2, normal3);
+            normalize(normal3);
+
+            calculate_vectors({x4, y2, z4}, {x2, y1, z2}, {x3, y2, z3}, vector1, vector2);
+            cross(vector1, vector2, normal4);
+            normalize(normal4);
 
             file << x1 << " " << y1 << " " << z1 << "\n";
+            file << normal1[0] << " " << normal1[1] << " " << normal1[2] << "\n";
+            file << x3 << " " << y2 << " " << z3 << "\n";
+            file << normal3[0] << " " << normal3[1] << " " << normal3[2] << "\n";
             file << x4 << " " << y2 << " " << z4 << "\n";
+            file << normal4[0] << " " << normal4[1] << " " << normal4[2] << "\n";
+
+            file << x1 << " " << y1 << " " << z1 << "\n";
+            file << normal1[0] << " " << normal1[1] << " " << normal1[2] << "\n";
+            file << x4 << " " << y2 << " " << z4 << "\n";
+            file << normal4[0] << " " << normal4[1] << " " << normal4[2] << "\n";
             file << x2 << " " << y1 << " " << z2 << "\n";
-            
+            file << normal2[0] << " " << normal2[1] << " " << normal4[2] << "\n";
         }
     }
     file.close();
@@ -388,12 +467,10 @@ void generate_bezier_patch(char* filename, int t, char* filename_destination){
 
     int n_patches = stoi(line);
 
-    //utilizar vector
     int patches[n_patches][16];
 
     for(int i = 0; i < n_patches; i++){
         getline(file_patch, line);
-        //utilizar substring
         char line_buffer[line.size() + 1];
         strcpy(line_buffer, line.c_str());
         char* token = strtok(line_buffer, ", ");
