@@ -237,20 +237,39 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
             float normal2[3];
             float normal3[3];
             float normal4[3];
+            float point1[3];
+            float point2[3];
+            float point3[3];
 
-            calculate_vectors({x1, y1, z1}, {x3, y2, z3}, {x2, y1, z2}, vector1, vector2);
+            point1[0] = x1; point1[1] = y1; point1[2] = z1;
+            point2[0] = x3; point2[1] = y2; point2[2] = z3;
+            point3[0] = x2; point3[1] = y1; point3[2] = z2;
+
+            calculate_vectors(point1, point2, point3, vector1, vector2);
             cross(vector1, vector2, normal1);
             normalize(normal1);
 
-            calculate_vectors({x2, y1, z2}, {x1, y1, z1}, {x4, y2, z4}, vector1, vector2);
+            point1[0] = x2; point1[1] = y1; point1[2] = z2;
+            point2[0] = x1; point2[1] = y1; point2[2] = z1;
+            point3[0] = x4; point3[1] = y2; point3[2] = z4;
+
+            calculate_vectors(point1, point2, point3, vector1, vector2);
             cross(vector1, vector2, normal2);
             normalize(normal2);
 
-            calculate_vectors({x3, y2, z3}, {x4, y2, z4}, {x1, y1, z1}, vector1, vector2);
+            point1[0] = x3; point1[1] = y2; point1[2] = z3;
+            point2[0] = x4; point2[1] = y2; point2[2] = z4;
+            point3[0] = x1; point3[1] = y1; point3[2] = z1;
+
+            calculate_vectors(point1, point2, point3, vector1, vector2);
             cross(vector1, vector2, normal3);
             normalize(normal3);
 
-            calculate_vectors({x4, y2, z4}, {x2, y1, z2}, {x3, y2, z3}, vector1, vector2);
+            point1[0] = x4; point1[1] = y2; point1[2] = z4;
+            point2[0] = x2; point2[1] = y1; point2[2] = z2;
+            point3[0] = x3; point3[1] = y2; point3[2] = z3;
+
+            calculate_vectors(point1, point2, point3, vector1, vector2);
             cross(vector1, vector2, normal4);
             normalize(normal4);
 
