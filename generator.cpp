@@ -434,6 +434,8 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     memcpy(previous_normals, normals, sizeof(normals));
 
     float rotation_matrix_y[4][4] = {0};
+    float space_x = 1.0f / slices;
+    float space_y = 1.0f / divisions;
     for (int i = 0; i < slices; i++) {
         generate_rotation_matrix_y(rotation_matrix_y, angle * (i + 1));
 
@@ -447,18 +449,24 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
             // Triângulo 1
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
             file << previous_normals[j][0] << " " << previous_normals[j][1] << " " << previous_normals[j][2] << "\n";
+            file << 1 - space_x * i << " " << 1 - space_y * j << "\n";
             file << next_coordinates[j + 1][0] << " " << next_coordinates[j + 1][1] << " " << next_coordinates[j + 1][2] << "\n";
             file << next_normals[j + 1][0] << " " << next_normals[j + 1][1] << " " << next_normals[j + 1][2] << "\n";
+            file << 1 - space_x * (i + 1) << " " << 1 - space_y * (j + 1) << "\n";
             file << previous_coordinates[j + 1][0] << " " << previous_coordinates[j + 1][1] << " " << previous_coordinates[j + 1][2] << "\n";
             file << previous_normals[j + 1][0] << " " << previous_normals[j + 1][1] << " " << previous_normals[j + 1][2] << "\n";
+            file << 1 - space_x * i << " " << 1 - space_y * (j + 1) << "\n";
 
             // Triângulo 2
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
             file << previous_normals[j][0] << " " << previous_normals[j][1] << " " << previous_normals[j][2] << "\n";
+            file << 1 - space_x * i << " " << 1 - space_y * j << "\n";
             file << next_coordinates[j][0] << " " << next_coordinates[j][1] << " " << next_coordinates[j][2] << "\n";
             file << next_normals[j][0] << " " << next_normals[j][1] << " " << next_normals[j][2] << "\n";
+            file << 1 - space_x * (i + 1) << " " << 1 - space_y * j << "\n";
             file << next_coordinates[j + 1][0] << " " << next_coordinates[j + 1][1] << " " << next_coordinates[j + 1][2] << "\n";
             file << next_normals[j + 1][0] << " " << next_normals[j + 1][1] << " " << next_normals[j + 1][2] << "\n";
+            file << 1 - space_x * (i + 1) << " " << 1 - space_y * (j + 1) << "\n";
         }
 
         memcpy(previous_coordinates, next_coordinates, sizeof(next_coordinates));
@@ -590,6 +598,16 @@ void generate_bezier_patch(char *filename, int t, char *filename_destination) {
     ofstream file = open_file(filename_destination);
     file << t * t * 6 * n_patches << endl;
 
+    float textures_coordinates[(t + 1) * (t + 1)][2];
+    float space = 1.0f / t;
+
+    for(int i = 0; i <= t; i++){
+        for(int j = 0; j <= t; j++){
+                textures_coordinates[i * (t + 1) + j][0] = space * j;
+                textures_coordinates[i * (t + 1) + j][1] = 1 - (space * i);
+        }
+    }
+
     for (int i = 0; i < n_patches; i++) {
         float px[4][4], py[4][4], pz[4][4];
         for (int j = 0; j < 4; j++) {
@@ -671,18 +689,24 @@ void generate_bezier_patch(char *filename, int t, char *filename_destination) {
                 // Triângulo 1
                 file << final_points[idx][0] << " " << final_points[idx][1] << " " << final_points[idx][2] << "\n";
                 file << final_normals[idx][0] << " " << final_normals[idx][1] << " " << final_normals[idx][2] << "\n";
+                file << textures_coordinates[idx][0] << " " << textures_coordinates[idx][1] << "\n";
                 file << final_points[idx + t + 1][0] << " " << final_points[idx + t + 1][1] << " " << final_points[idx + t + 1][2] << "\n";
                 file << final_normals[idx + t + 1][0] << " " << final_normals[idx + t + 1][1] << " " << final_normals[idx + t + 1][2] << "\n";
+                file << textures_coordinates[idx + t + 1][0] << " " << textures_coordinates[idx + t + 1][1] << "\n";
                 file << final_points[idx + t + 2][0] << " " << final_points[idx + t + 2][1] << " " << final_points[idx + t + 2][2] << "\n";
                 file << final_normals[idx + t + 2][0] << " " << final_normals[idx + t + 2][1] << " " << final_normals[idx + t + 2][2] << "\n";
+                file << textures_coordinates[idx + t + 2][0] << " " << textures_coordinates[idx + t + 2][1] << "\n";
 
                 // Triângulo 2
                 file << final_points[idx][0] << " " << final_points[idx][1] << " " << final_points[idx][2] << "\n";
                 file << final_normals[idx][0] << " " << final_normals[idx][1] << " " << final_normals[idx][2] << "\n";
+                file << textures_coordinates[idx][0] << " " << textures_coordinates[idx][1] << "\n";
                 file << final_points[idx + t + 2][0] << " " << final_points[idx + t + 2][1] << " " << final_points[idx + t + 2][2] << "\n";
                 file << final_normals[idx + t + 2][0] << " " << final_normals[idx + t + 2][1] << " " << final_normals[idx + t + 2][2] << "\n";
+                file << textures_coordinates[idx + t + 2][0] << " " << textures_coordinates[idx + t + 2][1] << "\n";
                 file << final_points[idx + 1][0] << " " << final_points[idx + 1][1] << " " << final_points[idx + 1][2] << "\n";
                 file << final_normals[idx + 1][0] << " " << final_normals[idx + 1][1] << " " << final_normals[idx + 1][2] << "\n";
+                file << textures_coordinates[idx + 1][0] << " " << textures_coordinates[idx + 1][1] << "\n";
             }
         }
     }
