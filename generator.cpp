@@ -102,10 +102,10 @@ void generate_points_texture_plane(float textures_coordinates[][2], int points_p
     float x, y;
     for(int i = 0; i < points_per_row; i++){
         y = 1 - (i * space);
-        for(int j = 0; i < points_per_row; j++){
+        for(int j = 0; j < points_per_row; j++){
             x = (j * space);
-            texture_coordinates[i * points_per_row + j][0] = x;
-            texture_coordinates[i * points_per_row + j][1] = y;
+            textures_coordinates[i * points_per_row + j][0] = x;
+            textures_coordinates[i * points_per_row + j][1] = y;
         }
     }
 }
@@ -237,7 +237,7 @@ void generate_box(float length, int divisions, char *filename)
     file.close();
 }
 
-void writeVertexWithNormal(float x, float y, float z, ofstream &file)
+void writeVertexWithNormalAndTexture(float x, float y, float z, ofstream &file, float tx, float ty)
 {
     float len = sqrt(x * x + y * y + z * z);
     float nx = x / len;
@@ -245,6 +245,7 @@ void writeVertexWithNormal(float x, float y, float z, ofstream &file)
     float nz = z / len;
     file << x << " " << y << " " << z << "\n";
     file << nx << " " << ny << " " << nz << "\n";
+    file << tx << " " << ty << "\n";
 }
 
 void generate_sphere(float radius, int slices, int stacks, char *filename)
@@ -255,6 +256,9 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
     ofstream file = open_file(filename);
 
     file << slices * stacks * 6 << "\n"; // 2 triângulos por quadrado
+
+    float space_x = 1 / slices;
+    float space_y = 1 / stacks;
 
     for (int i = 0; i < slices; i++)
     {
@@ -284,14 +288,14 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
             float z4 = radius * sin(phi2) * sin(theta2);
 
             // Triângulo 1
-            writeVertexWithNormal(x1, y1, z1, file);
-            writeVertexWithNormal(x3, y3, z3, file);
-            writeVertexWithNormal(x4, y4, z4, file);
+            writeVertexWithNormalAndTexture(x1, y1, z1, file, space_x * i, 1 - (space_y * j));
+            writeVertexWithNormalAndTexture(x3, y3, z3, file, space_x * i, 1 - (space_y * (j + 1)));
+            writeVertexWithNormalAndTexture(x4, y4, z4, file, space_x * (i + 1), 1 - (space_y * (j + 1)));
 
             // Triângulo 2
-            writeVertexWithNormal(x1, y1, z1, file);
-            writeVertexWithNormal(x4, y4, z4, file);
-            writeVertexWithNormal(x2, y2, z2, file);
+            writeVertexWithNormalAndTexture(x1, y1, z1, file, space_x * i, 1 - (space_y * j));
+            writeVertexWithNormalAndTexture(x4, y4, z4, file, space_x * (i + 1), 1 - (space_y * (j + 1)));
+            writeVertexWithNormalAndTexture(x2, y2, z2, file, space_x * (i + 1), 1 - (space_y * j));
         }
     }
 
@@ -314,9 +318,9 @@ void generate_cone(float radius, float height, int slices, int stacks, char *fil
         float theta1 = i * angle;
         float theta2 = (i + 1) * angle;
 
-        file << "0 0 0\n0 -1 0\n";                                                     // Centro da base
-        file << radius * cos(theta1) << " 0 " << radius * sin(theta1) << "\n0 -1 0\n"; // Ponto atual
-        file << radius * cos(theta2) << " 0 " << radius * sin(theta2) << "\n0 -1 0\n"; // Próximo ponto
+        file << "0 0 0\n0 -1 0\n0.5 0.5\n";                                                     // Centro da base
+        file << radius * cos(theta1) << " 0 " << radius * sin(theta1) << "\n0 -1 0\n" << 0.5 + (0.5 * cos(theta1)) << " " << 0.5 + (0.5 * sin(theta1)) << "\n"; // Ponto atual
+        file << radius * cos(theta2) << " 0 " << radius * sin(theta2) << "\n0 -1 0\n" << 0.5 + (0.5 * cos(theta2)) << " " << 0.5 + (0.5 * sin(theta2)) << "\n"; // Próximo ponto
     }
 
     // Laterais (normais inclinadas)
@@ -337,6 +341,7 @@ void generate_cone(float radius, float height, int slices, int stacks, char *fil
             // Pontos e normais
             float x1 = current_radius * cos(theta1);
             float z1 = current_radius * sin(theta1);
+            
             float nx1 = cos(theta1) * slope;
             float nz1 = sin(theta1) * slope;
             normalize(new float[3]{nx1, ny, nz1});
@@ -347,20 +352,31 @@ void generate_cone(float radius, float height, int slices, int stacks, char *fil
             float nz2 = sin(theta2) * slope;
             normalize(new float[3]{nx2, ny, nz2});
 
+            float u1 = (float) i / slices;
+            float u2 = (float)(i + 1) / slices;
+            float v1 = (float) j /stacks;
+            float v2 = (float)(j + 1)/stacks;
+
             // Triângulos laterais
             file << x1 << " " << current_height << " " << z1 << "\n"
-                 << nx1 << " " << ny << " " << nz1 << "\n";
+                 << nx1 << " " << ny << " " << nz1 << "\n"
+                 << u1 << " " << v1 << "\n";
             file << x1 * (next_radius / current_radius) << " " << next_height << " " << z1 * (next_radius / current_radius) << "\n"
-                 << nx1 << " " << ny << " " << nz1 << "\n";
+                 << nx1 << " " << ny << " " << nz1 << "\n"
+                 << u1 << " " << v2 << "\n";
             file << x2 * (next_radius / current_radius) << " " << next_height << " " << z2 * (next_radius / current_radius) << "\n"
-                 << nx2 << " " << ny << " " << nz2 << "\n";
+                 << nx2 << " " << ny << " " << nz2 << "\n"
+                 << u2 << " " << v2 << "\n";   
 
             file << x1 << " " << current_height << " " << z1 << "\n"
-                 << nx1 << " " << ny << " " << nz1 << "\n";
+                 << nx1 << " " << ny << " " << nz1 << "\n"
+                 << u1 << " " << v1 << "\n";
             file << x2 * (next_radius / current_radius) << " " << next_height << " " << z2 * (next_radius / current_radius) << "\n"
-                 << nx2 << " " << ny << " " << nz2 << "\n";
+                 << nx2 << " " << ny << " " << nz2 << "\n"
+                 << u2 << " " << v2 << "\n";
             file << x2 << " " << current_height << " " << z2 << "\n"
-                 << nx2 << " " << ny << " " << nz2 << "\n";
+                 << nx2 << " " << ny << " " << nz2 << "\n"
+                 << u2 << " " << v1 << "\n";
         }
     }
 
@@ -373,10 +389,13 @@ void generate_cone(float radius, float height, int slices, int stacks, char *fil
         normalize(new float[3]{nx, 0, nz});
 
         file << radius * cos(theta) << " 0 " << radius * sin(theta) << "\n"
-             << nx << " 0 " << nz << "\n";
-        file << "0 " << height << " 0\n0 1 0\n"; // Ponto do topo
+             << nx << " 0 " << nz << "\n"
+             << (float)i/slices << " 0\n";
+        file << "0 " << height << " 0\n0 1 0\n"
+             << (float) i / slices << " 1\n"; // Ponto do topo
         file << radius * cos(theta + angle) << " 0 " << radius * sin(theta + angle) << "\n"
-             << nx << " 0 " << nz << "\n";
+             << nx << " 0 " << nz << "\n"
+             << (float)(i + 1) / slices << " 0\n";
     }
 
     file.close();
