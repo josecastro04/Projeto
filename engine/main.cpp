@@ -17,7 +17,7 @@
 #include <map>
 
 using namespace std;
-bool solidMode = false;
+bool solidMode = true;
 static float omega, alpha, radius = 5.0f;
 static float k = 0.5f;
 unsigned int figure = 0;
@@ -334,9 +334,11 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
             {
                 XMLElement *diffuse = color->FirstChildElement("diffuse");
                 if (diffuse)
-                    diffuse->QueryFloatAttribute("R", &m.color.diffuse[0]),
-                        diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]),
+                {
+                    diffuse->QueryFloatAttribute("R", &m.color.diffuse[0]);
+                        diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]);
                         diffuse->QueryFloatAttribute("B", &m.color.diffuse[2]);
+                }
                 m.color.diffuse[0] /= 255.0f;
                 m.color.diffuse[1] /= 255.0f;
                 m.color.diffuse[2] /= 255.0f;
@@ -344,18 +346,22 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
 
                 XMLElement *ambient = color->FirstChildElement("ambient");
                 if (ambient)
-                    ambient->QueryFloatAttribute("R", &m.color.ambient[0]),
-                        ambient->QueryFloatAttribute("G", &m.color.ambient[1]),
+                {
+                    ambient->QueryFloatAttribute("R", &m.color.ambient[0]);
+                        ambient->QueryFloatAttribute("G", &m.color.ambient[1]);
                         ambient->QueryFloatAttribute("B", &m.color.ambient[2]);
+                }
                 m.color.ambient[0] /= 255.0f;
                 m.color.ambient[1] /= 255.0f;
                 m.color.ambient[2] /= 255.0f;
                 m.color.ambient[3] = 1.0f;
                 XMLElement *specular = color->FirstChildElement("specular");
                 if (specular)
-                    specular->QueryFloatAttribute("R", &m.color.specular[0]),
-                        specular->QueryFloatAttribute("G", &m.color.specular[1]),
+                {
+                    specular->QueryFloatAttribute("R", &m.color.specular[0]);
+                        specular->QueryFloatAttribute("G", &m.color.specular[1]);
                         specular->QueryFloatAttribute("B", &m.color.specular[2]);
+                }
                 m.color.specular[0] /= 255.0f;
                 m.color.specular[1] /= 255.0f;
                 m.color.specular[2] /= 255.0f;
@@ -363,9 +369,11 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
 
                 XMLElement *emissive = color->FirstChildElement("emissive");
                 if (emissive)
-                    emissive->QueryFloatAttribute("R", &m.color.emissive[0]),
-                        emissive->QueryFloatAttribute("G", &m.color.emissive[1]),
+                {
+                    emissive->QueryFloatAttribute("R", &m.color.emissive[0]);
+                        emissive->QueryFloatAttribute("G", &m.color.emissive[1]);
                         emissive->QueryFloatAttribute("B", &m.color.emissive[2]);
+                }
                 m.color.emissive[0] /= 255.0f;
                 m.color.emissive[1] /= 255.0f;
                 m.color.emissive[2] /= 255.0f;
@@ -374,7 +382,6 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 XMLElement *shininess = color->FirstChildElement("shininess");
                 if (shininess)
                     shininess->QueryFloatAttribute("value", &m.color.shininess);
-                m.color.shininess /= 128.0f;
             }
 
             models.model.push_back(m);
@@ -545,30 +552,40 @@ void drawFigureVBO(string filename)
 
         for (int i = 0; i < num_vertices; i++)
         {
+            // Lê coordenadas do vértice
             getline(file, line);
-            istringstream stream(line);
+            istringstream stream_vertex(line);
             float x, y, z;
-
-            if (!(stream >> x >> y >> z))
+            if (!(stream_vertex >> x >> y >> z))
             {
-                cerr << "Error when trying to read the values!" << endl;
+                cerr << "Error reading vertex coordinates!" << endl;
                 free(v);
                 free(n);
-                glEnd();
                 file.close();
                 return;
             }
-
             v[i * 3] = x;
             v[i * 3 + 1] = y;
             v[i * 3 + 2] = z;
-            n[i * 3] = 0;
-            n[i * 3 + 1] = 1;
-            n[i * 3 + 2] = 0;
+
+            // Lê normal do vértice
+            getline(file, line);
+            istringstream stream_normal(line);
+            float nx, ny, nz;
+            if (!(stream_normal >> nx >> ny >> nz))
+            {
+                cerr << "Error reading normal coordinates!" << endl;
+                free(v);
+                free(n);
+                file.close();
+                return;
+            }
+            n[i * 3] = nx;
+            n[i * 3 + 1] = ny;
+            n[i * 3 + 2] = nz;
         }
 
         GLuint buffers[2];
-
         glGenBuffers(2, buffers);
 
         glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
@@ -598,6 +615,7 @@ void drawFigureVBO(string filename)
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
 
+    
     glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
 
     glDisableClientState(GL_NORMAL_ARRAY);
@@ -623,6 +641,7 @@ void drawModel(Models &models, bool colorPicking = false)
 
     for (const Model &m : models.model)
     {
+
         glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
         glMaterialfv(GL_FRONT, GL_AMBIENT, m.color.ambient);
         glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
@@ -821,7 +840,7 @@ void luz_ativa()
         GLfloat lightDir[4] = {light.direction[0], light.direction[1], light.direction[2], light.direction[3]};
 
         float diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        float ambient[4] = {0.2f, 0.2f, 0.2f, 1.0f};
+        float ambient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
         float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
         glLightfv(light_id, GL_DIFFUSE, diffuse);
@@ -916,7 +935,6 @@ int main(int argc, char **argv)
     glutIdleFunc(renderScene);
     glutMouseFunc(processMouseButtons);
     glutMotionFunc(processMouseMotion);
-    
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
