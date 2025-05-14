@@ -71,10 +71,10 @@ void write_points_plane(ofstream &file, int points, int points_per_row, float co
             file << texture[index][0] << " " << texture[index][1] << "\n";
             file << coordinates[index + points_per_row + 1][0] << " " << coordinates[index + points_per_row + 1][1] << " " << coordinates[index + points_per_row + 1][2] << "\n";
             file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
-            file << texture[index + points_per_row][0] << " " << texture[index + points_per_row][1] << "\n";
+            file << texture[index + points_per_row + 1][0] << " " << texture[index + points_per_row + 1][1] << "\n";
             file << coordinates[index + 1][0] << " " << coordinates[index + 1][1] << " " << coordinates[index + 1][2] << "\n";
             file << normal[0] << " " << normal[1] << " " << normal[2] << "\n";
-            file << texture[index + points_per_row + 1][0] << " " << texture[index + points_per_row + 1][1] << "\n";
+            file << texture[index + 1][0] << " " << texture[index + 1][1] << "\n";
         }
     }
 }
@@ -97,7 +97,7 @@ void generate_points_plane(float coordinates[][3], float start_x, float start_y,
 }
 
 void generate_points_texture_plane(float textures_coordinates[][2], int points_per_row){
-    float space = 1 / (points_per_row - 1);
+    float space = 1.0f / (points_per_row - 1);
     
     float x, y;
     for(int i = 0; i < points_per_row; i++){
