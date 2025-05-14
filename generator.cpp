@@ -257,8 +257,8 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
 
     file << slices * stacks * 6 << "\n"; // 2 triângulos por quadrado
 
-    float space_x = 1 / slices;
-    float space_y = 1 / stacks;
+    float space_x = 1.0f / slices;
+    float space_y = 1.0f / stacks;
 
     for (int i = 0; i < slices; i++)
     {

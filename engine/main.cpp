@@ -3,6 +3,9 @@
 #else
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glext.h> 
+
 #endif
 #include <GL/glut.h>
 #include "transformations.h"
@@ -15,6 +18,7 @@
 #include <variant>
 #include <tinyxml2.h>
 #include <map>
+#include <IL/il.h>
 
 using namespace std;
 bool solidMode = true;
@@ -38,7 +42,9 @@ struct Color
 struct Model
 {
     std::string file;
+    std:: string filetextura;
     Color color;
+    GLuint textureID = 0;
 };
 
 struct Models
@@ -89,7 +95,7 @@ World world;
 
 struct ModelData
 {
-    GLuint vbo[2];
+    GLuint vbo[3];
     int vertexCount;
 };
 
@@ -243,6 +249,48 @@ void drawAxis()
     glColor3f(1.0f, 1.0f, 1.0f);
     glEnable(GL_LIGHTING);
 }
+
+int loadTexture(const char *filename)
+{
+    unsigned int t,tw,th;
+	unsigned char *texData;
+	unsigned int texID;
+
+	ilInit();
+	ilEnable(IL_ORIGIN_SET);
+	ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+	ilGenImages(1,&t);
+	ilBindImage(t);
+    ilLoadImage((ILstring)filename);
+	tw = ilGetInteger(IL_IMAGE_WIDTH);
+	th = ilGetInteger(IL_IMAGE_HEIGHT);
+	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+	texData = ilGetData();
+    
+	glGenTextures(1,&texID);
+	
+	glBindTexture(GL_TEXTURE_2D,texID);
+	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_WRAP_S,		GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_WRAP_T,		GL_REPEAT);
+    
+	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MAG_FILTER,   	GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+   
+	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
+	glGenerateMipmap(GL_TEXTURE_2D);
+    printf("TEXTid: %d\n", texID);
+    
+    
+	//glBindTexture(GL_TEXTURE_2D, 0);
+    
+
+    
+
+	return texID;
+    
+}
+
 void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
 {
     using namespace tinyxml2;
@@ -383,6 +431,20 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (shininess)
                     shininess->QueryFloatAttribute("value", &m.color.shininess);
             }
+            XMLElement *texture = model->FirstChildElement("texture");
+            if (texture)
+            {
+                const char *textureFile = texture->Attribute("file");
+                if (textureFile)
+                {
+                    m.filetextura = textureFile;
+                    printf("Texture file: %s\n", textureFile);
+                    //m.textureID = loadTexture(textureFile);
+                    
+                    
+                }
+            }
+            
 
             models.model.push_back(m);
         }
@@ -527,7 +589,8 @@ void parseInfo(char *filename)
         parseGroup(group, world.models);
 }
 
-void drawFigureVBO(string filename)
+void drawFigureVBO(string filename, GLuint textureID)
+
 {
     if (modelCache.find(filename) == modelCache.end())
     {
@@ -545,10 +608,11 @@ void drawFigureVBO(string filename)
         istringstream stream(line);
         stream >> num_vertices;
 
-        float *v, *n;
+        float *v, *n, *t;
 
         v = (float *)malloc(sizeof(float) * num_vertices * 3);
         n = (float *)malloc(sizeof(float) * num_vertices * 3);
+        t = (float *)malloc(sizeof(float) * num_vertices * 2);
 
         for (int i = 0; i < num_vertices; i++)
         {
@@ -583,10 +647,25 @@ void drawFigureVBO(string filename)
             n[i * 3] = nx;
             n[i * 3 + 1] = ny;
             n[i * 3 + 2] = nz;
+
+            // Lê coordenadas de textura
+            getline(file, line);
+            istringstream stream_texture(line);
+            float tx, ty;
+            if (!(stream_texture >> tx >> ty))
+            {
+                cerr << "Error reading texture coordinates!" << endl;
+                free(v);
+                free(n);
+                file.close();
+                return;
+            }
+            t[i * 2] = tx;
+            t[i * 2 + 1] = ty;
         }
 
-        GLuint buffers[2];
-        glGenBuffers(2, buffers);
+        GLuint buffers[3];
+        glGenBuffers(3, buffers);
 
         glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, v, GL_STATIC_DRAW);
@@ -594,17 +673,24 @@ void drawFigureVBO(string filename)
         glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, n, GL_STATIC_DRAW);
 
+        glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 2, t, GL_STATIC_DRAW);
+
         free(v);
         free(n);
+        free(t);
 
         ModelData data;
         data.vbo[0] = buffers[0];
         data.vbo[1] = buffers[1];
+        data.vbo[2] = buffers[2];
         data.vertexCount = num_vertices;
         modelCache[filename] = data;
     }
 
     ModelData &data = modelCache[filename];
+
+    glBindTexture(GL_TEXTURE_2D, textureID); 
 
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[0]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
@@ -612,15 +698,22 @@ void drawFigureVBO(string filename)
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[1]);
     glNormalPointer(GL_FLOAT, 0, 0);
 
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
+    glBindBuffer(GL_ARRAY_BUFFER, data.vbo[2]);
+    glTexCoordPointer(2, GL_FLOAT, 0, 0);
 
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
     
     glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
 
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }
+
 
 void drawModel(Models &models, bool colorPicking = false)
 {
@@ -639,7 +732,7 @@ void drawModel(Models &models, bool colorPicking = false)
         applyTransformation(transformation);
     }
 
-    for (const Model &m : models.model)
+    for ( Model &m : models.model)
     {
 
         glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
@@ -654,7 +747,19 @@ void drawModel(Models &models, bool colorPicking = false)
             glColor3f(color, color, color);
             i++;
         }
-        drawFigureVBO(m.file);
+
+        if (!m.filetextura.empty() && m.textureID == 0)
+        {
+            glEnable(GL_TEXTURE_2D);
+            printf("%d", loadTexture(m.filetextura.c_str()));
+            m.textureID = loadTexture(m.filetextura.c_str());
+            glBindTexture(GL_TEXTURE_2D, m.textureID);
+        }
+        else
+        {
+            glDisable(GL_TEXTURE_2D);
+        }
+        drawFigureVBO(m.file, m.textureID);
     }
 
     for (Models &child : models.models)
