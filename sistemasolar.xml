@@ -1,0 +1,320 @@
+<world>
+    <window width="1024" height="768" />
+    <camera>
+        <position x="600" y="150" z="400" />
+        <lookAt x="126" y="0" z="0" />
+        <up x="0" y="1" z="0" />
+        <projection fov="60" near="1" far="1000" />
+    </camera>
+
+    <group>
+        <!-- Sol -->
+        <group>
+            <transform>
+                <scale x="109.00" y="109.00" z="109.00" />
+                <rotate angle="7.25" x="0" y="0" z="1"/>
+            </transform>
+            <models>
+                <model file="sphere_1_30_30.3d" >
+                <texture file="sun.jpg" />
+                </model>
+            </models>
+        </group>
+
+        <!-- Mercúrio (órbita quase circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="3.6" align="true">
+                    <point x="114.806" y="0" z="0" />
+                    <point x="81.2" y="0" z="81.2" />
+                    <point x="0" y="0" z="114.806" />
+                    <point x="-81.2" y="0" z="81.2" />
+                    <point x="-114.806" y="0" z="0" />
+                    <point x="-81.2" y="0" z="-81.2" />
+                    <point x="0" y="0" z="-114.806" />
+                    <point x="81.2" y="0" z="-81.2" />
+                </translate>
+                <scale x="0.382" y="0.382" z="0.382" />
+                <rotate angle="7" x="0" y="0" z="1" />
+                <rotate time="2.407" x="0" y="1" z="0" />
+            </transform>
+            <models>
+                <model file="sphere_1_8_8.3d" >
+                <texture file="mercury.jpg" />
+                </model>
+            </models>
+        </group>
+
+        <!-- Vénus (órbita quase circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="9.225" align="true">
+                    <point x="119.849" y="0" z="0" />
+                    <point x="84.7" y="0" z="84.7" />
+                    <point x="0" y="0" z="119.849" />
+                    <point x="-84.7" y="0" z="84.7" />
+                    <point x="-119.849" y="0" z="0" />
+                    <point x="-84.7" y="0" z="-84.7" />
+                    <point x="0" y="0" z="-119.849" />
+                    <point x="84.7" y="0" z="-84.7" />
+                </translate>
+                <scale x="0.948" y="0.948" z="0.948" />
+                <rotate angle="177" x="0" y="0" z="1" />
+                <rotate time="9.993" x="0" y="1" z="0" />
+            </transform>
+            <models>
+                <model file="sphere_1_8_8.3d" >
+                <texture file="venus.jpg" />
+                </model>
+            </models>
+        </group>
+
+        <!-- Terra e Lua (órbita circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="15" align="true">
+                    <point x="124" y="0" z="0" />
+                    <point x="87.7" y="0" z="87.7" />
+                    <point x="0" y="0" z="124" />
+                    <point x="-87.7" y="0" z="87.7" />
+                    <point x="-124" y="0" z="0" />
+                    <point x="-87.7" y="0" z="-87.7" />
+                    <point x="0" y="0" z="-124" />
+                    <point x="87.7" y="0" z="-87.7" />
+                </translate>
+                <rotate angle="23.5" x="0" y="0" z="1" />
+            </transform>
+            <group> <!-- Lua -->
+                <transform>
+                    <rotate time="2" x="0" y="1" z="0" />
+                    <translate x="-1.311" y="0" z="0" />
+                    <scale x="0.272" y="0.272" z="0.272" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d" />
+                </models>
+            </group>
+            <models>
+                <model file="sphere_1_8_8.3d" >
+                <texture file="earth.jpg" />
+                </model>
+            </models>
+        </group>
+
+        <!-- Marte (órbita ligeiramente elíptica, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="28.2" align="true">
+                    <point x="131.854" y="0" z="0" />
+                    <point x="100" y="0" z="90" />
+                    <point x="0" y="0" z="140" />
+                    <point x="-110" y="0" z="80" />
+                    <point x="-131.854" y="0" z="0" />
+                    <point x="-100" y="0" z="-90" />
+                    <point x="0" y="0" z="-140" />
+                    <point x="110" y="0" z="-80" />
+                </translate>
+                <scale x="0.531" y="0.531" z="0.531" />
+                <rotate angle="25" x="0" y="0" z="1" />
+            </transform>
+            <models>
+                <model file="sphere_1_8_8.3d" >
+                <texture file="mars.jpg" />
+                </model>
+            </models>
+        </group>
+
+                <!-- Júpiter e luas (órbita quase circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="177.9" align="true">
+                    <point x="187.049" y="0" z="0" />
+                    <point x="132.2" y="0" z="132.2" />
+                    <point x="0" y="0" z="187.049" />
+                    <point x="-132.2" y="0" z="132.2" />
+                    <point x="-187.049" y="0" z="0" />
+                    <point x="-132.2" y="0" z="-132.2" />
+                    <point x="0" y="0" z="-187.049" />
+                    <point x="132.2" y="0" z="-132.2" />
+                </translate>
+            </transform>
+            <group> <!-- Júpiter -->
+                <transform>
+                    <scale x="10.961" y="10.961" z="10.961" />
+                    <rotate angle="3" x="0" y="0" z="1" />
+                    <rotate time="0.0169" x="0" y="1" z="0" />
+                </transform>
+                <models>
+                    <model file="sphere_1_15_15.3d" >
+                    <texture file="jupiter.jpg" />
+                    </model>
+                </models>
+            </group>
+            
+            <!-- Io  -->
+            <group>
+                <transform>
+                    <rotate time="0.228" x="0" y="1" z="0" />
+                    <translate x="15" y="0" z="0" /> 
+                    <scale x="0.286" y="0.286" z="0.286" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d" />
+                </models>
+            </group>
+            
+            <!-- Europa  -->
+            <group>
+                <transform>
+                    <rotate time="0.456" x="0" y="1" z="0" />
+                    <translate x="20" y="0" z="0" /> 
+                    <scale x="0.245" y="0.245" z="0.245" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d" />
+                </models>
+            </group>
+            
+            <!-- Ganímedes  -->
+            <group>
+                <transform>
+                    <rotate time="1.069" x="0" y="1" z="0" />
+                    <translate x="25" y="0" z="0" /> 
+                    <scale x="0.413" y="0.413" z="0.413" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d" />
+                </models>
+            </group>
+            
+            <!-- Calisto -->
+            <group>
+                <transform>
+                    <rotate time="2.369" x="0" y="1" z="0" />
+                    <translate x="35" y="0" z="0" /> 
+                    <scale x="0.378" y="0.378" z="0.378" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d" >
+                        </model>
+                </models>
+            </group>
+        </group>
+        <!-- Saturno (órbita quase circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="441.9" align="true">
+                    <point x="252.054" y="0" z="0" />
+                    <point x="178.2" y="0" z="178.2" />
+                    <point x="0" y="0" z="252.054" />
+                    <point x="-178.2" y="0" z="178.2" />
+                    <point x="-252.054" y="0" z="0" />
+                    <point x="-178.2" y="0" z="-178.2" />
+                    <point x="0" y="0" z="-252.054" />
+                    <point x="178.2" y="0" z="-178.2" />
+                </translate>
+            </transform>
+            <group> <!-- Saturno -->
+                <transform>
+                    <scale x="9.13" y="9.13" z="9.13" />
+                    <rotate angle="27" x="0" y="0" z="1" />
+                    <rotate time="0.01835" x="0" y="1" z="0" />
+                </transform>
+                <models>
+                    <model file="sphere_1_15_15.3d" >
+                    <texture file="saturn.jpg" />
+                    </model>
+                </models>
+            </group>
+            <group> <!-- Anéis -->
+                <transform>
+                    <rotate angle="26.5" x="1" y="0" z="0" />
+                    <scale x="10.975" y="0.00015" z="10.975"/>
+                </transform>
+                <models>
+                    <model file="torus_1_0_50_10.3d">
+                    <texture file="saturnring.jpg" />
+                    </model>
+                </models>
+            </group>
+        </group>
+
+        <!-- Urano (órbita quase circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="1260.15" align="true">
+                    <point x="396.864" y="0" z="0" />
+                    <point x="280.6" y="0" z="280.6" />
+                    <point x="0" y="0" z="396.864" />
+                    <point x="-280.6" y="0" z="280.6" />
+                    <point x="-396.864" y="0" z="0" />
+                    <point x="-280.6" y="0" z="-280.6" />
+                    <point x="0" y="0" z="-396.864" />
+                    <point x="280.6" y="0" z="-280.6" />
+                </translate>
+            </transform>
+            <group>
+                <transform>
+                    <scale x="3.976" y="3.976" z="3.976" />
+                    <rotate angle="97.77" x="0" y="0" z="1" />
+                    <rotate time="0.0296" x="0" y="1" z="0" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d">
+                    <texture file="uranus.jpg" />
+                    </model>
+                </models>
+            </group>
+        </group>
+
+        <!-- Neptuno (órbita quase circular, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="2472" align="true">
+                    <point x="560.028" y="0" z="0" />
+                    <point x="396" y="0" z="396" />
+                    <point x="0" y="0" z="560.028" />
+                    <point x="-396" y="0" z="396" />
+                    <point x="-560.028" y="0" z="0" />
+                    <point x="-396" y="0" z="-396" />
+                    <point x="0" y="0" z="-560.028" />
+                    <point x="396" y="0" z="-396" />
+                </translate>
+            </transform>
+            <group>
+                <transform>
+                    <scale x="3.886" y="3.886" z="3.886" />
+                    <rotate angle="28.32" x="0" y="0" z="1" />
+                    <rotate time="0.0275" x="0" y="1" z="0" />
+                </transform>
+                <models>
+                    <model file="sphere_1_8_8.3d" >
+                    <texture file="neptune.jpg" />
+                    </model>
+                </models>
+            </group>
+        </group>
+
+        <!-- Cometa Halley (órbita elíptica e inclinada, 8 pontos) -->
+        <group>
+            <transform>
+                <translate time="1140" align="true">
+                    <point x="0" y="0" z="350" />
+                    <point x="250" y="100" z="250" />
+                    <point x="400" y="150" z="0" />
+                    <point x="250" y="100" z="-250" />
+                    <point x="0" y="0" z="-350" />
+                    <point x="-300" y="120" z="-250" />
+                    <point x="-500" y="100" z="0" />
+                    <point x="-300" y="120" z="250" />
+                </translate>
+                <rotate angle="18" x="0" y="0" z="1" />
+                <rotate time="0.03" x="0" y="1" z="0" />
+                <scale x="0.5" y="0.5" z="0.5" />
+            </transform>
+            <models>
+                <model file="sphere_1_10_10.3d" />
+            </models>
+        </group>
+    </group>
+</world>
