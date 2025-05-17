@@ -16,7 +16,7 @@
             </transform>
             <models>
                 <model file="sphere_1_30_30.3d" >
-                <texture file="sun.jpg" />
+                <texture file="Textures/sun.jpg" />
                 </model>
             </models>
         </group>
@@ -40,7 +40,7 @@
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" >
-                <texture file="mercury.jpg" />
+                <texture file="Textures/mercury.jpg" />
                 </model>
             </models>
         </group>
@@ -64,7 +64,7 @@
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" >
-                <texture file="venus.jpg" />
+                <texture file="Textures/venus.jpg" />
                 </model>
             </models>
         </group>
@@ -92,11 +92,12 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" />
+                    <texture file="Textures/moon.jpg" />
                 </models>
             </group>
             <models>
                 <model file="sphere_1_8_8.3d" >
-                <texture file="earth.jpg" />
+                <texture file="Textures/earth.jpg" />
                 </model>
             </models>
         </group>
@@ -119,7 +120,7 @@
             </transform>
             <models>
                 <model file="sphere_1_8_8.3d" >
-                <texture file="mars.jpg" />
+                <texture file="Textures/mars.jpg" />
                 </model>
             </models>
         </group>
@@ -146,7 +147,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_15_15.3d" >
-                    <texture file="jupiter.jpg" />
+                    <texture file="Textures/jupiter.jpg" />
                     </model>
                 </models>
             </group>
@@ -222,7 +223,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_15_15.3d" >
-                    <texture file="saturn.jpg" />
+                    <texture file="Textures/saturn.jpg" />
                     </model>
                 </models>
             </group>
@@ -233,7 +234,7 @@
                 </transform>
                 <models>
                     <model file="torus_1_0_50_10.3d">
-                    <texture file="saturnring.jpg" />
+                    <texture file="Textures/saturnring.jpg" />
                     </model>
                 </models>
             </group>
@@ -261,7 +262,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d">
-                    <texture file="uranus.jpg" />
+                    <texture file="Textures/uranus.jpg" />
                     </model>
                 </models>
             </group>
@@ -289,7 +290,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" >
-                    <texture file="neptune.jpg" />
+                    <texture file="Textures/neptune.jpg" />
                     </model>
                 </models>
             </group>
