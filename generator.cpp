@@ -404,7 +404,7 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     // Gera o círculo inicial com normais
     float rotation_matrix_z[4][4] = {0};
     for (int i = 0; i < divisions + 1; i++) {
-        generate_rotation_matrix_z(rotation_matrix_z, M_PI + angle * i);
+        generate_rotation_matrix_z(rotation_matrix_z, angle * i);
         
         // Calcula coordenadas
         coordinates[i][0] = radius + (0 * rotation_matrix_z[0][0] + circle_radius * rotation_matrix_z[0][1] + 0 * rotation_matrix_z[0][2]);
@@ -425,6 +425,7 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
 
     float rotation_matrix_y[4][4] = {0};
     float space = 1.0f / divisions;
+    int swap = divisions / 4;
     
     for (int i = 0; i < slices; i++) {
         generate_rotation_matrix_y(rotation_matrix_y, angle * (i + 1));
@@ -433,28 +434,32 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
         float next_normals[divisions + 1][3];
         apply_rotation(rotation_matrix_y, coordinates, next_coordinates, divisions + 1);
         apply_rotation(rotation_matrix_y, normals, next_normals, divisions + 1);
+        int k = divisions / 10 * 3;
         for (int j = 0; j < divisions; j++) {
-
+            if(divisions - (divisions / 10) * 3 == j){
+                k = 0;
+            }
            
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
             file << previous_normals[j][0] << " " << previous_normals[j][1] << " " << previous_normals[j][2] << "\n";
-            file << space * j << " " << 0 << "\n";
+            file << space * k << " " << 0 << "\n";
             file << next_coordinates[j + 1][0] << " " << next_coordinates[j + 1][1] << " " << next_coordinates[j + 1][2] << "\n";
             file << next_normals[j + 1][0] << " " << next_normals[j + 1][1] << " " << next_normals[j + 1][2] << "\n";
-            file << space * (j + 1) << " " << 1 << "\n";
+            file << space * (k + 1) << " " << 1 << "\n";
             file << previous_coordinates[j + 1][0] << " " << previous_coordinates[j + 1][1] << " " << previous_coordinates[j + 1][2] << "\n";
             file << previous_normals[j + 1][0] << " " << previous_normals[j + 1][1] << " " << previous_normals[j + 1][2] << "\n";
-            file << space * (j + 1) << " " << 0 << "\n";
+            file << space * (k + 1) << " " << 0 << "\n";
 
             file << previous_coordinates[j][0] << " " << previous_coordinates[j][1] << " " << previous_coordinates[j][2] << "\n";
             file << previous_normals[j][0] << " " << previous_normals[j][1] << " " << previous_normals[j][2] << "\n";
-            file << space * j << " " << 0 << "\n";
+            file << space * k << " " << 0 << "\n";
             file << next_coordinates[j][0] << " " << next_coordinates[j][1] << " " << next_coordinates[j][2] << "\n";
             file << next_normals[j][0] << " " << next_normals[j][1] << " " << next_normals[j][2] << "\n";
-            file << space * j << " " << 1 << "\n";
+            file << space * k << " " << 1 << "\n";
             file << next_coordinates[j + 1][0] << " " << next_coordinates[j + 1][1] << " " << next_coordinates[j + 1][2] << "\n";
             file << next_normals[j + 1][0] << " " << next_normals[j + 1][1] << " " << next_normals[j + 1][2] << "\n";
-            file << space * (j + 1) << " " << 1 << "\n";
+            file << space * (k + 1) << " " << 1 << "\n";
+            k++;
         }
 
         memcpy(previous_coordinates, next_coordinates, sizeof(next_coordinates));
