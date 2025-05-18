@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <GL/gl.h>
-#include <GL/glext.h> 
+#include <GL/glext.h>
 
 #endif
 #include <GL/glut.h>
@@ -42,7 +42,7 @@ struct Color
 struct Model
 {
     std::string file;
-    std:: string filetextura;
+    std::string filetextura;
     Color color;
     GLuint textureID = 0;
 };
@@ -252,43 +252,37 @@ void drawAxis()
 
 int loadTexture(const char *filename)
 {
-    unsigned int t,tw,th;
-	unsigned char *texData;
-	unsigned int texID;
+    unsigned int t, tw, th;
+    unsigned char *texData;
+    unsigned int texID;
 
-	ilInit();
-	ilEnable(IL_ORIGIN_SET);
-	ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
-	ilGenImages(1,&t);
-	ilBindImage(t);
-    ilLoadImage((ILstring)filename);
-	tw = ilGetInteger(IL_IMAGE_WIDTH);
-	th = ilGetInteger(IL_IMAGE_HEIGHT);
-	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-	texData = ilGetData();
-    
-	glGenTextures(1,&texID);
-	
-	glBindTexture(GL_TEXTURE_2D,texID);
-	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_WRAP_S,		GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_WRAP_T,		GL_REPEAT);
-    
-	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MAG_FILTER,   	GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   
-	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
-	glGenerateMipmap(GL_TEXTURE_2D);
+    ilInit();
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+    ilGenImages(1, &t);
+    ilBindImage(t);
+    ilLoadImage((const char *)filename);
+    tw = ilGetInteger(IL_IMAGE_WIDTH);
+    th = ilGetInteger(IL_IMAGE_HEIGHT);
+    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+    texData = ilGetData();
+
+    glGenTextures(1, &texID);
+    printf("Texture ID: %d, Width: %d, Height: %d\n", texID, tw, th);
+
+    glBindTexture(GL_TEXTURE_2D, texID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
+    glGenerateMipmap(GL_TEXTURE_2D);
     printf("TEXTid: %d\n", texID);
-    
-    
-	//glBindTexture(GL_TEXTURE_2D, 0);
-    
 
-    
-
-	return texID;
-    
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texID;
 }
 
 void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
@@ -384,8 +378,8 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (diffuse)
                 {
                     diffuse->QueryFloatAttribute("R", &m.color.diffuse[0]);
-                        diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]);
-                        diffuse->QueryFloatAttribute("B", &m.color.diffuse[2]);
+                    diffuse->QueryFloatAttribute("G", &m.color.diffuse[1]);
+                    diffuse->QueryFloatAttribute("B", &m.color.diffuse[2]);
                 }
                 m.color.diffuse[0] /= 255.0f;
                 m.color.diffuse[1] /= 255.0f;
@@ -396,8 +390,8 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (ambient)
                 {
                     ambient->QueryFloatAttribute("R", &m.color.ambient[0]);
-                        ambient->QueryFloatAttribute("G", &m.color.ambient[1]);
-                        ambient->QueryFloatAttribute("B", &m.color.ambient[2]);
+                    ambient->QueryFloatAttribute("G", &m.color.ambient[1]);
+                    ambient->QueryFloatAttribute("B", &m.color.ambient[2]);
                 }
                 m.color.ambient[0] /= 255.0f;
                 m.color.ambient[1] /= 255.0f;
@@ -407,8 +401,8 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (specular)
                 {
                     specular->QueryFloatAttribute("R", &m.color.specular[0]);
-                        specular->QueryFloatAttribute("G", &m.color.specular[1]);
-                        specular->QueryFloatAttribute("B", &m.color.specular[2]);
+                    specular->QueryFloatAttribute("G", &m.color.specular[1]);
+                    specular->QueryFloatAttribute("B", &m.color.specular[2]);
                 }
                 m.color.specular[0] /= 255.0f;
                 m.color.specular[1] /= 255.0f;
@@ -419,8 +413,8 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (emissive)
                 {
                     emissive->QueryFloatAttribute("R", &m.color.emissive[0]);
-                        emissive->QueryFloatAttribute("G", &m.color.emissive[1]);
-                        emissive->QueryFloatAttribute("B", &m.color.emissive[2]);
+                    emissive->QueryFloatAttribute("G", &m.color.emissive[1]);
+                    emissive->QueryFloatAttribute("B", &m.color.emissive[2]);
                 }
                 m.color.emissive[0] /= 255.0f;
                 m.color.emissive[1] /= 255.0f;
@@ -439,12 +433,9 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 {
                     m.filetextura = textureFile;
                     printf("Texture file: %s\n", textureFile);
-                    //m.textureID = loadTexture(textureFile);
-                    
-                    
+                    // m.textureID = loadTexture(textureFile);
                 }
             }
-            
 
             models.model.push_back(m);
         }
@@ -458,8 +449,7 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
     }
 }
 
-void parseInfo(char *filename)
-{
+void parseInfo(char *filename){
     using namespace tinyxml2;
     XMLDocument doc;
     if (doc.LoadFile(filename) != XML_SUCCESS)
@@ -590,7 +580,6 @@ void parseInfo(char *filename)
 }
 
 void drawFigureVBO(string filename, GLuint textureID)
-
 {
     if (modelCache.find(filename) == modelCache.end())
     {
@@ -690,30 +679,29 @@ void drawFigureVBO(string filename, GLuint textureID)
 
     ModelData &data = modelCache[filename];
 
-    glBindTexture(GL_TEXTURE_2D, textureID); 
+    glBindTexture(GL_TEXTURE_2D, textureID);
 
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[0]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
-
+    
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[1]);
     glNormalPointer(GL_FLOAT, 0, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[2]);
     glTexCoordPointer(2, GL_FLOAT, 0, 0);
-
+    
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
-    
+
     glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
+    
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
 }
-
 
 void drawModel(Models &models, bool colorPicking = false)
 {
@@ -732,7 +720,7 @@ void drawModel(Models &models, bool colorPicking = false)
         applyTransformation(transformation);
     }
 
-    for ( Model &m : models.model)
+    for (Model &m : models.model)
     {
 
         glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
@@ -750,14 +738,8 @@ void drawModel(Models &models, bool colorPicking = false)
 
         if (!m.filetextura.empty() && m.textureID == 0)
         {
-            glEnable(GL_TEXTURE_2D);
-            printf("%d", loadTexture(m.filetextura.c_str()));
             m.textureID = loadTexture(m.filetextura.c_str());
             glBindTexture(GL_TEXTURE_2D, m.textureID);
-        }
-        else
-        {
-            glDisable(GL_TEXTURE_2D);
         }
         drawFigureVBO(m.file, m.textureID);
     }
@@ -997,6 +979,7 @@ void renderScene()
               world.camera.up.x, world.camera.up.y, world.camera.up.z);
     glEnable(GL_LIGHTING);
     glEnable(GL_NORMALIZE);
+    glEnable(GL_TEXTURE_2D);
 
     luz_ativa();
 
