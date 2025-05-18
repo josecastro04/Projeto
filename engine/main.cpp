@@ -25,10 +25,10 @@ bool solidMode = true;
 static float omega, alpha, radius = 5.0f;
 static float k = 0.5f;
 unsigned int figure = 0;
+int i = 1;
 static int mouseX = 0, mouseY = 0;
 static float zoomFactor = 1.0f;
 static bool mouseLeftDown = false, mouseRightDown = false;
-int code = 1;
 
 struct Color
 {
@@ -49,7 +49,6 @@ struct Model
 
 struct Models
 {
-    std::vector<std::string> figure_name;
     std::vector<Model> model;
     std::vector<Transformation> transformations;
     std::vector<Models> models;
@@ -372,13 +371,6 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
             if (file)
                 m.file = file;
 
-            const char *name = model->Attribute("name");
-            if (name){
-                world.models.figure_name.push_back((std::string)name);
-            }else{
-                world.models.figure_name.push_back("");
-            }
-
             XMLElement *color = model->FirstChildElement("color");
             if (color)
             {
@@ -440,6 +432,8 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (textureFile)
                 {
                     m.filetextura = textureFile;
+                    printf("Texture file: %s\n", textureFile);
+                    // m.textureID = loadTexture(textureFile);
                 }
             }
 
@@ -455,8 +449,7 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
     }
 }
 
-void parseInfo(char *filename)
-{
+void parseInfo(char *filename){
     using namespace tinyxml2;
     XMLDocument doc;
     if (doc.LoadFile(filename) != XML_SUCCESS)
@@ -690,13 +683,13 @@ void drawFigureVBO(string filename, GLuint textureID)
 
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[0]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
-
+    
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[1]);
     glNormalPointer(GL_FLOAT, 0, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[2]);
     glTexCoordPointer(2, GL_FLOAT, 0, 0);
-
+    
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -704,7 +697,7 @@ void drawFigureVBO(string filename, GLuint textureID)
     glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
 
     glBindTexture(GL_TEXTURE_2D, 0);
-
+    
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
@@ -738,9 +731,9 @@ void drawModel(Models &models, bool colorPicking = false)
 
         if (colorPicking)
         {
-            float color = (float)code/ 255.0f;
+            float color = (float)i / 255.0f;
             glColor3f(color, color, color);
-            code++;
+            i++;
         }
 
         if (!m.filetextura.empty() && m.textureID == 0)
@@ -818,12 +811,60 @@ void processMouseButtons(int button, int state, int xx, int yy)
     {
         if (button == GLUT_LEFT_BUTTON)
         {
-            code = 1; //code for color
+            i = 1;
             figure = picking(xx, yy);
-            if (figure - 1 < world.models.figure_name.size()) {
-                cout << world.models.figure_name[figure - 1] << "\n";
-            } else {
-                cout << "Figura selecionada inválida (índice fora dos limites): " << figure << "\n";
+            switch (figure)
+            {
+            case 1:
+                cout << "Sol Clicado" << endl;
+                break;
+            case 2:
+                cout << "Mercúrio Clicado" << endl;
+                break;
+            case 3:
+                cout << "Vénus Clicado" << endl;
+                break;
+            case 4:
+                cout << "Terra Clicada" << endl;
+                break;
+            case 5:
+                cout << "Lua Clicada" << endl;
+                break;
+            case 6:
+                cout << "Marte Clicado" << endl;
+                break;
+            case 7:
+                cout << "Jupiter Clicado" << endl;
+                break;
+            case 8:
+                cout << "Io Clicado" << endl;
+                break;
+            case 9:
+                cout << "Europa Clicado" << endl;
+                break;
+            case 10:
+                cout << "Ganimedes Clicado" << endl;
+                break;
+            case 11:
+                cout << "Calisto Clicado" << endl;
+                break;
+            case 12:
+                cout << "Saturno Clicado" << endl;
+                break;
+            case 13:
+                cout << "Aneis de Saturno Clicados" << endl;
+                break;
+            case 14:
+                cout << "Urano Clicado" << endl;
+                break;
+            case 15:
+                cout << "Neptuno Clicado" << endl;
+                break;
+            case 16:
+                cout << "Cometa Halley Clicado" << endl;
+                break;
+            default:
+                cout << "Nada" << endl;
             }
             glutPostRedisplay();
         }
@@ -967,9 +1008,6 @@ int main(int argc, char **argv)
     }
 
     parseInfo(argv[1]);
-    for(string name : world.models.figure_name){
-        cout << name << "\n";
-    }
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
