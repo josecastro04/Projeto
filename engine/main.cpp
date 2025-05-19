@@ -33,7 +33,7 @@ int code = 1;
 struct Color
 {
     float diffuse[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    float ambient[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    float ambient[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     float emissive[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     float shininess = 0.0f;
@@ -45,6 +45,9 @@ struct Model
     std::string filetextura;
     Color color;
     GLuint textureID = 0;
+
+    GLuint vbo[3];
+    int vertexCount;
 };
 
 struct Models
@@ -366,6 +369,7 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
     {
         for (XMLElement *model = modelsElement->FirstChildElement("model"); model; model = model->NextSiblingElement("model"))
         {
+            printf("loading model \n");
             Model m;
 
             const char *file = model->Attribute("file");
@@ -444,6 +448,7 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
             }
 
             models.model.push_back(m);
+            printf("has now size %d\n", models.model.size());
         }
     }
 
@@ -452,6 +457,10 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
         Models childModels;
         parseGroup(childGroup, childModels);
         models.models.push_back(childModels);
+        // for (Model model : childModels.model) {
+        //     models.model.push_back(model);
+        // }
+
     }
 }
 
@@ -586,6 +595,108 @@ void parseInfo(char *filename)
         parseGroup(group, world.models);
 }
 
+void loadToVBO(Model& model) {
+    printf("1\n");
+    ifstream file(model.file);
+    if (!file)
+    {
+        cerr << "Error when trying to open the file!" << endl;
+        exit(0);
+    }
+
+    printf("2\n");
+    int num_vertices = 0;
+    string line;
+    getline(file, line);
+    istringstream stream(line);
+    stream >> num_vertices;
+
+    float *v, *n, *t;
+
+    v = (float *)malloc(sizeof(float) * num_vertices * 3);
+    n = (float *)malloc(sizeof(float) * num_vertices * 3);
+    t = (float *)malloc(sizeof(float) * num_vertices * 2);
+
+    printf("2\n");
+    for (int i = 0; i < num_vertices; i++)
+    {
+        // Lê coordenadas do vértice
+        getline(file, line);
+        istringstream stream_vertex(line);
+        float x, y, z;
+        if (!(stream_vertex >> x >> y >> z))
+        {
+            cerr << "Error reading vertex coordinates!" << endl;
+            free(v);
+            free(n);
+            file.close();
+            return;
+        }
+        v[i * 3] = x;
+        v[i * 3 + 1] = y;
+        v[i * 3 + 2] = z;
+
+        // Lê normal do vértice
+        getline(file, line);
+        istringstream stream_normal(line);
+        float nx, ny, nz;
+        if (!(stream_normal >> nx >> ny >> nz))
+        {
+            cerr << "Error reading normal coordinates!" << endl;
+            free(v);
+            free(n);
+            file.close();
+            return;
+        }
+        n[i * 3] = nx;
+        n[i * 3 + 1] = ny;
+        n[i * 3 + 2] = nz;
+
+        // Lê coordenadas de textura
+        getline(file, line);
+        istringstream stream_texture(line);
+        float tx, ty;
+        if (!(stream_texture >> tx >> ty))
+        {
+            cerr << "Error reading texture coordinates!" << endl;
+            free(v);
+            free(n);
+            file.close();
+            return;
+        }
+        t[i * 2] = tx;
+        t[i * 2 + 1] = ty;
+    }
+
+    if (!model.filetextura.empty())
+    {
+        model.textureID = loadTexture(model.filetextura.c_str());
+    }
+
+    GLuint buffers[3];
+    glGenBuffers(3, buffers);
+
+    printf("3\n");
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, v, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, n, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 2, t, GL_STATIC_DRAW);
+
+    printf("4\n");
+    model.vbo[0] = buffers[0];
+    model.vbo[1] = buffers[1];
+    model.vbo[2] = buffers[2];
+    model.vertexCount = num_vertices;
+
+    free(v);
+    free(n);
+    free(t);
+}
+
 void drawFigureVBO(string filename, GLuint textureID)
 {
     if (modelCache.find(filename) == modelCache.end())
@@ -697,17 +808,17 @@ void drawFigureVBO(string filename, GLuint textureID)
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[2]);
     glTexCoordPointer(2, GL_FLOAT, 0, 0);
 
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    // glEnableClientState(GL_NORMAL_ARRAY);
+    // glEnableClientState(GL_VERTEX_ARRAY);
 
     glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
+    // glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    // glDisableClientState(GL_NORMAL_ARRAY);
+    // glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void drawModel(Models &models, bool colorPicking = false)
@@ -729,12 +840,18 @@ void drawModel(Models &models, bool colorPicking = false)
 
     for (Model &m : models.model)
     {
-
-        glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
-        glMaterialfv(GL_FRONT, GL_AMBIENT, m.color.ambient);
-        glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
-        glMaterialfv(GL_FRONT, GL_EMISSION, m.color.emissive);
-        glMaterialf(GL_FRONT, GL_SHININESS, m.color.shininess);
+        if (m.filetextura.empty()) {
+            printf("diffuse: %f %f %f\n", m.color.diffuse[0], m.color.diffuse[1], m.color.diffuse[2]);
+            printf("ambient: %f %f %f\n", m.color.ambient[0], m.color.ambient[1], m.color.ambient[2]);
+            printf("specular: %f %f %f\n", m.color.specular[0], m.color.specular[1], m.color.specular[2]);
+            printf("emissive: %f %f %f\n", m.color.emissive[0], m.color.emissive[1], m.color.emissive[2]);
+            printf("shininess: %f\n", m.color.shininess);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
+            glMaterialfv(GL_FRONT, GL_AMBIENT, m.color.ambient);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
+            glMaterialfv(GL_FRONT, GL_EMISSION, m.color.emissive);
+            glMaterialf(GL_FRONT, GL_SHININESS, m.color.shininess);
+        }
 
         if (colorPicking)
         {
@@ -748,6 +865,7 @@ void drawModel(Models &models, bool colorPicking = false)
             m.textureID = loadTexture(m.filetextura.c_str());
             glBindTexture(GL_TEXTURE_2D, m.textureID);
         }
+        glEnable(GL_LIGHTING);
         drawFigureVBO(m.file, m.textureID);
     }
 
@@ -761,6 +879,7 @@ void drawModel(Models &models, bool colorPicking = false)
 
 unsigned char picking(int x, int y)
 {
+    return 0;
 
     glDisable(GL_LIGHTING);
     glDisable(GL_TEXTURE_2D);
@@ -889,6 +1008,7 @@ void luz_ativa()
         float ambient[4] = {0.5f, 0.5f, 0.5f, 1.0f};
         float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
         glLightfv(light_id, GL_DIFFUSE, diffuse);
         glLightfv(light_id, GL_AMBIENT, ambient);
         glLightfv(light_id, GL_SPECULAR, specular);
@@ -953,6 +1073,31 @@ void renderScene()
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 
+
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+
+
+    // for (Model model : world.models.model) {
+    //     glBindTexture(GL_TEXTURE_2D, model.textureID);
+        
+    //     glBindBuffer(GL_ARRAY_BUFFER, model.vbo[0]);
+    //     glVertexPointer(3, GL_FLOAT, 0, 0);
+
+    //     glBindBuffer(GL_ARRAY_BUFFER, model.vbo[1]);
+    //     glNormalPointer(GL_FLOAT, 0, 0);
+
+    //     glBindBuffer(GL_ARRAY_BUFFER, model.vbo[2]);
+    //     glTexCoordPointer(2, GL_FLOAT, 0, 0);
+
+    //     glDrawArrays(GL_TRIANGLES, 0, model.vertexCount);
+        
+
+
+    //     glBindBuffer(GL_ARRAY_BUFFER, 0);
+    //     glBindTexture(GL_TEXTURE_2D, 0);
+    // }
     drawModel(world.models);
 
     glutSwapBuffers();
@@ -967,9 +1112,7 @@ int main(int argc, char **argv)
     }
 
     parseInfo(argv[1]);
-    for(string name : world.models.figure_name){
-        cout << name << "\n";
-    }
+
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
@@ -995,6 +1138,14 @@ int main(int argc, char **argv)
     }
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    printf("size: %d\n", world.models.model.size());
+    for (Model& model : world.models.model) {
+        cout << model.file << "\n";
+        cout << model.filetextura << "\n";
+        loadToVBO(model);
+        printf("vertex count: %d\n", model.vertexCount);
+    }
 
     glutMainLoop();
 

@@ -294,105 +294,115 @@ void generate_sphere(float radius, int slices, int stacks, char *filename)
     file.close();
 }
 
-void generate_cone(float radius, float height, int slices, int stacks, char *filename)
-{
+void generate_cone(float radius, float height, int slices, int stacks, char *filename) {
     ofstream file = open_file(filename);
     float angle = 2 * M_PI / slices;
     float stack_height = height / stacks;
     float stack_radius_step = radius / stacks;
+    
+    // Total de triângulos: 
+    // - Base: slices triângulos
+    // - Lateral: 2 * slices * stacks triângulos
+    // - Topo: slices triângulos
+    int total_triangles = slices + (2 * slices * stacks) + slices;
+    file << total_triangles * 3 << "\n";
 
-    int total_points = (slices * 3) + (slices * stacks * 6) + (slices * 3);
-    file << total_points << "\n";
+    // Textura
+    float tex_u_step = 1.0f / slices;
+    float tex_v_step = 1.0f / stacks;
 
-    // Base (normal para baixo)
-    for (int i = 0; i < slices; i++)
-    {
+    // 1. Base do cone
+    for (int i = 0; i < slices; i++) {
         float theta1 = i * angle;
         float theta2 = (i + 1) * angle;
-
-        file << "0 0 0\n0 -1 0\n0.5 0.5\n";                                                     // Centro da base
-        file << radius * cos(theta1) << " 0 " << radius * sin(theta1) << "\n0 -1 0\n" << 0.5 + (0.5 * cos(theta1)) << " " << 0.5 + (0.5 * sin(theta1)) << "\n"; // Ponto atual
-        file << radius * cos(theta2) << " 0 " << radius * sin(theta2) << "\n0 -1 0\n" << 0.5 + (0.5 * cos(theta2)) << " " << 0.5 + (0.5 * sin(theta2)) << "\n"; // Próximo ponto
+        
+        // Centro (normal para baixo)
+        file << "0 0 0\n0 -1 0\n0.5 0.5\n";
+        
+        // Ponto atual
+        file << radius * cos(theta1) << " 0 " << radius * sin(theta1) << "\n0 -1 0\n"
+             << 0.5 + 0.5 * cos(theta1) << " " << 0.5 + 0.5 * sin(theta1) << "\n";
+        
+        // Próximo ponto
+        file << radius * cos(theta2) << " 0 " << radius * sin(theta2) << "\n0 -1 0\n"
+             << 0.5 + 0.5 * cos(theta2) << " " << 0.5 + 0.5 * sin(theta2) << "\n";
     }
 
-    // Laterais (normais inclinadas)
-    for (int j = 0; j < stacks; j++)
-    {
-        float current_radius = radius - (j * stack_radius_step);
-        float next_radius = radius - ((j + 1) * stack_radius_step);
-        float current_height = j * stack_height;
-        float next_height = (j + 1) * stack_height;
-        float slope = radius / height;
-        float ny = 1 / sqrt(1 + slope * slope); // Componente Y da normal
+    // 2. Superfície lateral
+    float slope = radius / height;  // Inclinação para cálculo de normais
+    for (int stack = 0; stack < stacks; stack++) {
+        float current_radius = radius - (stack * stack_radius_step);
+        float next_radius = radius - ((stack + 1) * stack_radius_step);
+        float current_z = stack * stack_height;
+        float next_z = (stack + 1) * stack_height;
 
-        for (int i = 0; i < slices; i++)
-        {
-            float theta1 = i * angle;
-            float theta2 = (i + 1) * angle;
+        for (int slice = 0; slice < slices; slice++) {
+            float theta1 = slice * angle;
+            float theta2 = (slice + 1) * angle;
 
-            // Pontos e normais
-            float x1 = current_radius * cos(theta1);
-            float z1 = current_radius * sin(theta1);
-            
-            float nx1 = cos(theta1) * slope;
-            float nz1 = sin(theta1) * slope;
-            normalize(new float[3]{nx1, ny, nz1});
+            // Normais calculadas corretamente
+            float normal1[] = {cos(theta1), slope, sin(theta1)};
+            float normal2[] = {cos(theta2), slope, sin(theta2)};
+            normalize(normal1);
+            normalize(normal2);
 
-            float x2 = current_radius * cos(theta2);
-            float z2 = current_radius * sin(theta2);
-            float nx2 = cos(theta2) * slope;
-            float nz2 = sin(theta2) * slope;
-            normalize(new float[3]{nx2, ny, nz2});
+            // Coordenadas de textura
+            float u1 = slice * tex_u_step;
+            float u2 = (slice + 1) * tex_u_step;
+            float v1 = 1.0 - (stack * tex_v_step);  // Invertido para mapeamento correto
+            float v2 = 1.0 - ((stack + 1) * tex_v_step);
 
-            float u1 = (float) i / slices;
-            float u2 = (float)(i + 1) / slices;
-            float v1 = (float) j /stacks;
-            float v2 = (float)(j + 1)/stacks;
-
-            // Triângulos laterais
-            file << x1 << " " << current_height << " " << z1 << "\n"
-                 << nx1 << " " << ny << " " << nz1 << "\n"
+            // Triângulo 1
+            file << current_radius * cos(theta1) << " " << current_z << " " << current_radius * sin(theta1) << "\n"
+                 << normal1[0] << " " << normal1[1] << " " << normal1[2] << "\n"
                  << u1 << " " << v1 << "\n";
-            file << x1 * (next_radius / current_radius) << " " << next_height << " " << z1 * (next_radius / current_radius) << "\n"
-                 << nx1 << " " << ny << " " << nz1 << "\n"
+                 
+            file << next_radius * cos(theta1) << " " << next_z << " " << next_radius * sin(theta1) << "\n"
+                 << normal1[0] << " " << normal1[1] << " " << normal1[2] << "\n"
                  << u1 << " " << v2 << "\n";
-            file << x2 * (next_radius / current_radius) << " " << next_height << " " << z2 * (next_radius / current_radius) << "\n"
-                 << nx2 << " " << ny << " " << nz2 << "\n"
-                 << u2 << " " << v2 << "\n";   
-
-            file << x1 << " " << current_height << " " << z1 << "\n"
-                 << nx1 << " " << ny << " " << nz1 << "\n"
-                 << u1 << " " << v1 << "\n";
-            file << x2 * (next_radius / current_radius) << " " << next_height << " " << z2 * (next_radius / current_radius) << "\n"
-                 << nx2 << " " << ny << " " << nz2 << "\n"
+                 
+            file << next_radius * cos(theta2) << " " << next_z << " " << next_radius * sin(theta2) << "\n"
+                 << normal2[0] << " " << normal2[1] << " " << normal2[2] << "\n"
                  << u2 << " " << v2 << "\n";
-            file << x2 << " " << current_height << " " << z2 << "\n"
-                 << nx2 << " " << ny << " " << nz2 << "\n"
+
+            // Triângulo 2
+            file << current_radius * cos(theta1) << " " << current_z << " " << current_radius * sin(theta1) << "\n"
+                 << normal1[0] << " " << normal1[1] << " " << normal1[2] << "\n"
+                 << u1 << " " << v1 << "\n";
+                 
+            file << next_radius * cos(theta2) << " " << next_z << " " << next_radius * sin(theta2) << "\n"
+                 << normal2[0] << " " << normal2[1] << " " << normal2[2] << "\n"
+                 << u2 << " " << v2 << "\n";
+                 
+            file << current_radius * cos(theta2) << " " << current_z << " " << current_radius * sin(theta2) << "\n"
+                 << normal2[0] << " " << normal2[1] << " " << normal2[2] << "\n"
                  << u2 << " " << v1 << "\n";
         }
     }
 
-    // Topo (normais horizontais)
-    for (int i = 0; i < slices; i++)
-    {
+    // 3. Topo do cone
+    for (int i = 0; i < slices; i++) {
         float theta = i * angle;
-        float nx = cos(theta);
-        float nz = sin(theta);
-        normalize(new float[3]{nx, 0, nz});
+        float next_theta = (i + 1) * angle;
+        
+        // Normal do topo (direção da superfície)
+        float normal[] = {cos(theta), slope, sin(theta)};
+        normalize(normal);
 
         file << radius * cos(theta) << " 0 " << radius * sin(theta) << "\n"
-             << nx << " 0 " << nz << "\n"
+             << normal[0] << " " << normal[1] << " " << normal[2] << "\n"
              << (float)i/slices << " 0\n";
+             
         file << "0 " << height << " 0\n0 1 0\n"
-             << (float) i / slices << " 1\n"; // Ponto do topo
-        file << radius * cos(theta + angle) << " 0 " << radius * sin(theta + angle) << "\n"
-             << nx << " 0 " << nz << "\n"
-             << (float)(i + 1) / slices << " 0\n";
+             << (float)i/slices << " 1\n";
+             
+        file << radius * cos(next_theta) << " 0 " << radius * sin(next_theta) << "\n"
+             << normal[0] << " " << normal[1] << " " << normal[2] << "\n"
+             << (float)(i+1)/slices << " 0\n";
     }
 
     file.close();
 }
-
 void generate_torus(float radius, float circle_radius, int slices, int divisions, char *filename) {
     float coordinates[divisions + 1][3];
     float normals[divisions + 1][3]; // Array para normais
@@ -464,77 +474,60 @@ void generate_torus(float radius, float circle_radius, int slices, int divisions
     file.close();
 }
 
-void generate_cylinder(float radius, float height, int divisions, char *filename){
+void generate_cylinder(float radius, float height, int divisions, char *filename) {
     ofstream file = open_file(filename);
-
     float angle = 2 * M_PI / divisions;
-    float coordinates[2][3] = {{radius, height / 2, 0}, {radius, -height / 2, 0}};
     file << (3 * divisions) * 2 + 6 * divisions << "\n";
 
-    float rotation_matrix_y[4][4] = {0};
-    float previous_coordinates[2][3];
+    for (int i = 1; i <= divisions; i++) {
+        float theta_prev = angle * (i - 1);
+        float theta_curr = angle * i;
 
-    memcpy(previous_coordinates, coordinates, sizeof(coordinates));
-    for(float i = 1; i <= divisions; i++){
-        float new_coordinates[2][3];
-        float normal_lateral_p[3];
-        float normal_lateral_n[3];
-        generate_rotation_matrix_y(rotation_matrix_y, angle * i);
-        apply_rotation(rotation_matrix_y, coordinates, new_coordinates, 2);
+        // Normais corrigidas
+        float normal_prev[3] = {cos(theta_prev), 0, sin(theta_prev)};
+        float normal_curr[3] = {cos(theta_curr), 0, sin(theta_curr)};
+        normalize(normal_prev);
+        normalize(normal_curr);
 
-        normal_lateral_p[0] = cos(angle * (i- 1));
-        normal_lateral_p[0] = 0;
-        normal_lateral_p[0] = sin(angle * (i- 1));
+        // Base superior
+        file << radius * cos(theta_prev) << " " << height/2 << " " << radius * sin(theta_prev) << "\n"
+             << "0 1 0\n"
+             << 0.5 + 0.5 * cos(theta_prev) << " " << 0.5 + 0.5 * sin(theta_prev) << "\n";
+        file << radius * cos(theta_curr) << " " << height/2 << " " << radius * sin(theta_curr) << "\n"
+             << "0 1 0\n"
+             << 0.5 + 0.5 * cos(theta_curr) << " " << 0.5 + 0.5 * sin(theta_curr) << "\n";
+        file << "0 " << height/2 << " 0\n0 1 0\n0.5 0.5\n";
 
-        normal_lateral_n[0] = cos(angle * i);
-        normal_lateral_n[0] = 0;
-        normal_lateral_n[0] = sin(angle * i);
+        // Base inferior
+        file << radius * cos(theta_curr) << " " << -height/2 << " " << radius * sin(theta_curr) << "\n"
+             << "0 -1 0\n"
+             << 0.5 + 0.5 * cos(theta_curr) << " " << 0.5 + 0.5 * sin(theta_curr) << "\n";
+        file << radius * cos(theta_prev) << " " << -height/2 << " " << radius * sin(theta_prev) << "\n"
+             << "0 -1 0\n"
+             << 0.5 + 0.5 * cos(theta_prev) << " " << 0.5 + 0.5 * sin(theta_prev) << "\n";
+        file << "0 " << -height/2 << " 0\n0 -1 0\n0.5 0.5\n";
 
-        //Topo
-        file << previous_coordinates[0][0] << " " << previous_coordinates[0][1] << " " << previous_coordinates[0][2] << "\n";
-        file << "0 1 0" << "\n";
-        file << 0.4375 + sin(angle * (i - 1)) * 0.1875 << " " << 0.1875 + cos(angle * (i - 1)) * 0.1875<< "\n";
-        file << new_coordinates[0][0] << " " << new_coordinates[0][1] << " " << new_coordinates[0][2] << "\n";
-        file << "0 1 0" << "\n";
-        file << 0.4375 + sin(angle * i) * 0.1875 << " " << 0.1875 + cos(angle * i) * 0.1875 << "\n";
-        file << 0 << " " << previous_coordinates[0][1] << " " << 0 << "\n";
-        file << "0 1 0" << "\n";
-        file << "0.4375 0.1875" << "\n";
+        // Laterais
+        file << radius * cos(theta_prev) << " " << height/2 << " " << radius * sin(theta_prev) << "\n"
+             << normal_prev[0] << " " << normal_prev[1] << " " << normal_prev[2] << "\n"
+             << (i-1.0)/divisions << " 1\n";
+        file << radius * cos(theta_prev) << " " << -height/2 << " " << radius * sin(theta_prev) << "\n"
+             << normal_prev[0] << " " << normal_prev[1] << " " << normal_prev[2] << "\n"
+             << (i-1.0)/divisions << " 0\n";
+        file << radius * cos(theta_curr) << " " << -height/2 << " " << radius * sin(theta_curr) << "\n"
+             << normal_curr[0] << " " << normal_curr[1] << " " << normal_curr[2] << "\n"
+             << (i)/divisions << " 0\n";
 
-        //Baixo
-        file << new_coordinates[1][0] << " " << new_coordinates[1][1] << " " << new_coordinates[1][2] << "\n";
-        file << "0 -1 0" << "\n";
-        file << 0.8125 + sin(angle * i) * 0.1875 << " " << 0.1875 + cos(angle * i) * 0.1875 << "\n";
-        file << previous_coordinates[1][0] << " " << previous_coordinates[1][1] << " " << previous_coordinates[1][2] << "\n";
-        file << "0 -1 0" << "\n";
-        file << 0.8125 + sin(angle * (i - 1)) * 0.1875 << " " << 0.1875 + cos(angle * (i - 1)) * 0.1875 << "\n";
-        file << 0 << " " << new_coordinates[1][1] << " " << 0 << "\n";
-        file << "0 -1 0" << "\n";
-        file << "0.8125 0.1875" << "\n";
-
-        //Laterais
-        file << previous_coordinates[0][0] << " " << previous_coordinates[0][1] << " " << previous_coordinates[0][2] << "\n";
-        file << normal_lateral_p[0] << " " << normal_lateral_p[1] << " " << normal_lateral_p[2] << "\n";
-        file << (i - 1) / divisions << " " << 1 << "\n";
-        file << previous_coordinates[1][0] << " " << previous_coordinates[1][1] << " " << previous_coordinates[1][2] << "\n";
-        file << normal_lateral_p[0] << " " << normal_lateral_p[1] << " " << normal_lateral_p[2] << "\n";
-        file << (i - 1) / divisions << " " << 0.375 << "\n";
-        file << new_coordinates[1][0] << " " << new_coordinates[1][1] << " " << new_coordinates[1][2] << "\n";
-        file << normal_lateral_n[0] << " " << normal_lateral_n[1] << " " << normal_lateral_n[2] << "\n";
-        file << i / divisions << " " << 0.375 << "\n";
-
-        file << previous_coordinates[0][0] << " " << previous_coordinates[0][1] << " " << previous_coordinates[0][2] << "\n";
-        file << normal_lateral_p[0] << " " << normal_lateral_p[1] << " " << normal_lateral_p[2] << "\n";
-        file << (i - 1) / divisions << " " << 1 << "\n";
-        file << new_coordinates[1][0] << " " << new_coordinates[1][1] << " " << new_coordinates[1][2] << "\n";
-        file << normal_lateral_n[0] << " " << normal_lateral_n[1] << " " << normal_lateral_n[2] << "\n";
-        file << i / divisions << " " << 0.375 << "\n";
-        file << new_coordinates[0][0] << " " << new_coordinates[0][1] << " " << new_coordinates[0][2] << "\n";
-        file << normal_lateral_n[0] << " " << normal_lateral_n[1] << " " << normal_lateral_n[2] << "\n";
-        file << i / divisions << " " << 1 << "\n";
-
-        memcpy(previous_coordinates, new_coordinates, sizeof(new_coordinates));
-    }  
+        file << radius * cos(theta_prev) << " " << height/2 << " " << radius * sin(theta_prev) << "\n"
+             << normal_prev[0] << " " << normal_prev[1] << " " << normal_prev[2] << "\n"
+             << (i-1.0)/divisions << " 1\n";
+        file << radius * cos(theta_curr) << " " << -height/2 << " " << radius * sin(theta_curr) << "\n"
+             << normal_curr[0] << " " << normal_curr[1] << " " << normal_curr[2] << "\n"
+             << (i)/divisions << " 0\n";
+        file << radius * cos(theta_curr) << " " << height/2 << " " << radius * sin(theta_curr) << "\n"
+             << normal_curr[0] << " " << normal_curr[1] << " " << normal_curr[2] << "\n"
+             << (i)/divisions << " 1\n";
+    }
 
     file.close();
 }
