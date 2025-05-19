@@ -82,9 +82,9 @@ struct Light
         SPOT
     };
     Type type;
-    float position[4];  // Usado para luzes 'point' e 'spot'
-    float direction[4]; // Usado para luzes 'directional' e 'spot'
-    float cutoff;       // Usado para luzes 'spot'
+    float position[4];  
+    float direction[4]; 
+    float cutoff;       
 };
 
 struct World
@@ -176,7 +176,7 @@ void key_press(unsigned char key, int x, int y)
     if (key == 'a')
     {
         float right[3];
-        float up[3] = {world.camera.up.x, world.camera.up.y, world.camera.up.z}; // (0,1,0) normalmente
+        float up[3] = {world.camera.up.x, world.camera.up.y, world.camera.up.z}; 
         cross(up, d, right);
         normalize(right);
 
@@ -190,7 +190,7 @@ void key_press(unsigned char key, int x, int y)
     if (key == 'd')
     {
         float right[3];
-        float up[3] = {world.camera.up.x, world.camera.up.y, world.camera.up.z}; // (0,1,0) normalmente
+        float up[3] = {world.camera.up.x, world.camera.up.y, world.camera.up.z}; 
         cross(up, d, right);
         normalize(right);
 
@@ -436,8 +436,8 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
                 if (textureFile)
                 {
                     m.filetextura = textureFile;
-                    printf("Texture file: %s\n", textureFile);
-                    // m.textureID = loadTexture(textureFile);
+                   
+                   
                 }
             }
 
@@ -451,9 +451,7 @@ void parseGroup(tinyxml2::XMLElement *groupElement, Models &models)
         Models childModels;
         parseGroup(childGroup, childModels);
         models.models.push_back(childModels);
-        // for (Model model : childModels.model) {
-        //     models.model.push_back(model);
-        // }
+        
 
     }
 }
@@ -529,7 +527,7 @@ void parseInfo(char *filename){
     {
         for (XMLElement *lightElem = lights->FirstChildElement("light"); lightElem; lightElem = lightElem->NextSiblingElement("light"))
         {
-            Light light; // Cria uma nova luz para cada tag <light>
+            Light light; 
 
             const char *type = lightElem->Attribute("type");
             if (type)
@@ -559,9 +557,9 @@ void parseInfo(char *filename){
                     lightElem->QueryFloatAttribute("posx", &light.position[0]);
                     lightElem->QueryFloatAttribute("posy", &light.position[1]);
                     lightElem->QueryFloatAttribute("posz", &light.position[2]);
-                    light.position[3] = 1.0f; // w = 1 (ponto)
+                    light.position[3] = 1.0f; 
 
-                    // Inicializa direção a zero (não usada em point)
+                    
                     light.direction[0] = light.direction[1] = light.direction[2] = 0.0f;
                     light.direction[3] = 0.0f;
                 }
@@ -588,107 +586,6 @@ void parseInfo(char *filename){
         parseGroup(group, world.models);
 }
 
-void loadToVBO(Model& model) {
-    printf("1\n");
-    ifstream file(model.file);
-    if (!file)
-    {
-        cerr << "Error when trying to open the file!" << endl;
-        exit(0);
-    }
-
-    printf("2\n");
-    int num_vertices = 0;
-    string line;
-    getline(file, line);
-    istringstream stream(line);
-    stream >> num_vertices;
-
-    float *v, *n, *t;
-
-    v = (float *)malloc(sizeof(float) * num_vertices * 3);
-    n = (float *)malloc(sizeof(float) * num_vertices * 3);
-    t = (float *)malloc(sizeof(float) * num_vertices * 2);
-
-    printf("2\n");
-    for (int i = 0; i < num_vertices; i++)
-    {
-        // Lê coordenadas do vértice
-        getline(file, line);
-        istringstream stream_vertex(line);
-        float x, y, z;
-        if (!(stream_vertex >> x >> y >> z))
-        {
-            cerr << "Error reading vertex coordinates!" << endl;
-            free(v);
-            free(n);
-            file.close();
-            return;
-        }
-        v[i * 3] = x;
-        v[i * 3 + 1] = y;
-        v[i * 3 + 2] = z;
-
-        // Lê normal do vértice
-        getline(file, line);
-        istringstream stream_normal(line);
-        float nx, ny, nz;
-        if (!(stream_normal >> nx >> ny >> nz))
-        {
-            cerr << "Error reading normal coordinates!" << endl;
-            free(v);
-            free(n);
-            file.close();
-            return;
-        }
-        n[i * 3] = nx;
-        n[i * 3 + 1] = ny;
-        n[i * 3 + 2] = nz;
-
-        // Lê coordenadas de textura
-        getline(file, line);
-        istringstream stream_texture(line);
-        float tx, ty;
-        if (!(stream_texture >> tx >> ty))
-        {
-            cerr << "Error reading texture coordinates!" << endl;
-            free(v);
-            free(n);
-            file.close();
-            return;
-        }
-        t[i * 2] = tx;
-        t[i * 2 + 1] = ty;
-    }
-
-    if (!model.filetextura.empty())
-    {
-        model.textureID = loadTexture(model.filetextura.c_str());
-    }
-
-    GLuint buffers[3];
-    glGenBuffers(3, buffers);
-
-    printf("3\n");
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, v, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 3, n, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * num_vertices * 2, t, GL_STATIC_DRAW);
-
-    printf("4\n");
-    model.vbo[0] = buffers[0];
-    model.vbo[1] = buffers[1];
-    model.vbo[2] = buffers[2];
-    model.vertexCount = num_vertices;
-
-    free(v);
-    free(n);
-    free(t);
-}
 
 void drawFigureVBO(string filename, GLuint textureID)
 {
@@ -716,7 +613,7 @@ void drawFigureVBO(string filename, GLuint textureID)
 
         for (int i = 0; i < num_vertices; i++)
         {
-            // Lê coordenadas do vértice
+            
             getline(file, line);
             istringstream stream_vertex(line);
             float x, y, z;
@@ -732,7 +629,7 @@ void drawFigureVBO(string filename, GLuint textureID)
             v[i * 3 + 1] = y;
             v[i * 3 + 2] = z;
 
-            // Lê normal do vértice
+           
             getline(file, line);
             istringstream stream_normal(line);
             float nx, ny, nz;
@@ -748,7 +645,7 @@ void drawFigureVBO(string filename, GLuint textureID)
             n[i * 3 + 1] = ny;
             n[i * 3 + 2] = nz;
 
-            // Lê coordenadas de textura
+            
             getline(file, line);
             istringstream stream_texture(line);
             float tx, ty;
@@ -801,17 +698,10 @@ void drawFigureVBO(string filename, GLuint textureID)
     glBindBuffer(GL_ARRAY_BUFFER, data.vbo[2]);
     glTexCoordPointer(2, GL_FLOAT, 0, 0);
 
-    // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    // glEnableClientState(GL_NORMAL_ARRAY);
-    // glEnableClientState(GL_VERTEX_ARRAY);
-
     glDrawArrays(GL_TRIANGLES, 0, data.vertexCount);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    // glDisableClientState(GL_NORMAL_ARRAY);
-    // glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void drawModel(Models &models, bool colorPicking = false)
@@ -834,11 +724,7 @@ void drawModel(Models &models, bool colorPicking = false)
     for (Model &m : models.model)
     {
         if (m.filetextura.empty()) {
-            printf("diffuse: %f %f %f\n", m.color.diffuse[0], m.color.diffuse[1], m.color.diffuse[2]);
-            printf("ambient: %f %f %f\n", m.color.ambient[0], m.color.ambient[1], m.color.ambient[2]);
-            printf("specular: %f %f %f\n", m.color.specular[0], m.color.specular[1], m.color.specular[2]);
-            printf("emissive: %f %f %f\n", m.color.emissive[0], m.color.emissive[1], m.color.emissive[2]);
-            printf("shininess: %f\n", m.color.shininess);
+            
             glMaterialfv(GL_FRONT, GL_DIFFUSE, m.color.diffuse);
             glMaterialfv(GL_FRONT, GL_AMBIENT, m.color.ambient);
             glMaterialfv(GL_FRONT, GL_SPECULAR, m.color.specular);
@@ -858,7 +744,7 @@ void drawModel(Models &models, bool colorPicking = false)
             m.textureID = loadTexture(m.filetextura.c_str());
             glBindTexture(GL_TEXTURE_2D, m.textureID);
         }
-        glEnable(GL_LIGHTING);
+       
         drawFigureVBO(m.file, m.textureID);
     }
 
@@ -1034,13 +920,13 @@ void changeSize(int w, int h)
 }
 void luz_ativa()
 {
-    glEnable(GL_LIGHTING);
+ 
 
     for (size_t i = 0; i < world.lights.size() && i < GL_MAX_LIGHTS; ++i)
     {
         GLenum light_id = GL_LIGHT0 + i;
 
-        // Set light type (directional, point, or spot)
+        
         Light &light = world.lights[i];
         GLfloat lightPos[4] = {light.position[0], light.position[1], light.position[2], light.position[3]};
         GLfloat lightDir[4] = {light.direction[0], light.direction[1], light.direction[2], light.direction[3]};
@@ -1057,7 +943,7 @@ void luz_ativa()
         switch (light.type)
         {
         case Light::DIRECTIONAL:
-            glLightfv(light_id, GL_POSITION, light.direction); // w = 0 (direcional)
+            glLightfv(light_id, GL_POSITION, light.direction); 
             break;
         case Light::POINT:
         {
@@ -1078,7 +964,7 @@ void luz_ativa()
             break;
         }
 
-            // Additional settings for spotlights
+            
             if (light.type == Light::SPOT)
             {
                 glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, lightDir);
@@ -1104,7 +990,7 @@ void renderScene()
     luz_ativa();
 
     drawAxis();
-    glEnable(GL_LIGHTING);
+    
     if (solidMode)
     {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1120,25 +1006,6 @@ void renderScene()
     glEnableClientState(GL_VERTEX_ARRAY);
 
 
-    // for (Model model : world.models.model) {
-    //     glBindTexture(GL_TEXTURE_2D, model.textureID);
-        
-    //     glBindBuffer(GL_ARRAY_BUFFER, model.vbo[0]);
-    //     glVertexPointer(3, GL_FLOAT, 0, 0);
-
-    //     glBindBuffer(GL_ARRAY_BUFFER, model.vbo[1]);
-    //     glNormalPointer(GL_FLOAT, 0, 0);
-
-    //     glBindBuffer(GL_ARRAY_BUFFER, model.vbo[2]);
-    //     glTexCoordPointer(2, GL_FLOAT, 0, 0);
-
-    //     glDrawArrays(GL_TRIANGLES, 0, model.vertexCount);
-        
-
-
-    //     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    //     glBindTexture(GL_TEXTURE_2D, 0);
-    // }
     drawModel(world.models);
 
     glutSwapBuffers();
@@ -1180,13 +1047,7 @@ int main(int argc, char **argv)
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    printf("size: %d\n", world.models.model.size());
-    for (Model& model : world.models.model) {
-        cout << model.file << "\n";
-        cout << model.filetextura << "\n";
-        loadToVBO(model);
-        printf("vertex count: %d\n", model.vertexCount);
-    }
+    
 
     glutMainLoop();
 
