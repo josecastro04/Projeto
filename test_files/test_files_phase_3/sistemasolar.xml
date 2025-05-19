@@ -6,16 +6,26 @@
         <up x="0" y="1" z="0" />
         <projection fov="60" near="1" far="1000" />
     </camera>
+    <background file="Textures/Space.jpg" />
+
+    <lights>
+        <light type="point" posx="0" posy="0" posz="0" />
+    </lights>
 
     <group>
         <!-- Sol -->
         <group>
             <transform>
                 <scale x="109.00" y="109.00" z="109.00" />
-                <rotate angle="7.25" x="0" y="0" z="1"/>
+                <rotate angle="7.25" x="0" y="0" z="1" />
             </transform>
             <models>
-                <model file="sphere_1_30_30.3d" />
+                <model file="sphere_1_30_30.3d" name="Sol">
+                    <texture file="Textures/sun.jpg" />
+                </model>
+                <color>
+                    <emissive R="255" G="255" B="255" />
+                </color>
             </models>
         </group>
 
@@ -37,7 +47,9 @@
                 <rotate time="2.407" x="0" y="1" z="0" />
             </transform>
             <models>
-                <model file="sphere_1_8_8.3d" />
+                <model file="sphere_1_8_8.3d" name="Mercúrio">
+                    <texture file="Textures/mercury.jpg" />
+                </model>
             </models>
         </group>
 
@@ -59,7 +71,9 @@
                 <rotate time="9.993" x="0" y="1" z="0" />
             </transform>
             <models>
-                <model file="sphere_1_8_8.3d" />
+                <model file="sphere_1_8_8.3d" name="Vénus">
+                    <texture file="Textures/venus.jpg" />
+                </model>
             </models>
         </group>
 
@@ -85,11 +99,14 @@
                     <scale x="0.272" y="0.272" z="0.272" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Lua" />
+                    <texture file="Textures/moon.jpg" />
                 </models>
             </group>
             <models>
-                <model file="sphere_1_8_8.3d" />
+                <model file="sphere_1_8_8.3d" name="Terra">
+                    <texture file="Textures/earth.jpg" />
+                </model>
             </models>
         </group>
 
@@ -110,11 +127,13 @@
                 <rotate angle="25" x="0" y="0" z="1" />
             </transform>
             <models>
-                <model file="sphere_1_8_8.3d" />
+                <model file="sphere_1_8_8.3d" name="Marte">
+                    <texture file="Textures/mars.jpg" />
+                </model>
             </models>
         </group>
 
-                <!-- Júpiter e luas (órbita quase circular, 8 pontos) -->
+        <!-- Júpiter e luas (órbita quase circular, 8 pontos) -->
         <group>
             <transform>
                 <translate time="177.9" align="true">
@@ -135,55 +154,58 @@
                     <rotate time="0.0169" x="0" y="1" z="0" />
                 </transform>
                 <models>
-                    <model file="sphere_1_15_15.3d" />
+                    <model file="sphere_1_15_15.3d" name="Júpiter">
+                        <texture file="Textures/jupiter.jpg" />
+                    </model>
                 </models>
             </group>
-            
+
             <!-- Io  -->
             <group>
                 <transform>
                     <rotate time="0.228" x="0" y="1" z="0" />
-                    <translate x="15" y="0" z="0" /> 
+                    <translate x="15" y="0" z="0" />
                     <scale x="0.286" y="0.286" z="0.286" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Lua Io" />
                 </models>
             </group>
-            
+
             <!-- Europa  -->
             <group>
                 <transform>
                     <rotate time="0.456" x="0" y="1" z="0" />
-                    <translate x="20" y="0" z="0" /> 
+                    <translate x="20" y="0" z="0" />
                     <scale x="0.245" y="0.245" z="0.245" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Lua Europa" />
                 </models>
             </group>
-            
+
             <!-- Ganímedes  -->
             <group>
                 <transform>
                     <rotate time="1.069" x="0" y="1" z="0" />
-                    <translate x="25" y="0" z="0" /> 
+                    <translate x="25" y="0" z="0" />
                     <scale x="0.413" y="0.413" z="0.413" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Lua Ganímedes" />
                 </models>
             </group>
-            
+
             <!-- Calisto -->
             <group>
                 <transform>
                     <rotate time="2.369" x="0" y="1" z="0" />
-                    <translate x="35" y="0" z="0" /> 
+                    <translate x="35" y="0" z="0" />
                     <scale x="0.378" y="0.378" z="0.378" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Lua Calisto">
+                    </model>
                 </models>
             </group>
         </group>
@@ -208,16 +230,20 @@
                     <rotate time="0.01835" x="0" y="1" z="0" />
                 </transform>
                 <models>
-                    <model file="sphere_1_15_15.3d" />
+                    <model file="sphere_1_15_15.3d" name="Saturno">
+                        <texture file="Textures/saturn.jpg" />
+                    </model>
                 </models>
             </group>
             <group> <!-- Anéis -->
                 <transform>
                     <rotate angle="26.5" x="1" y="0" z="0" />
-                    <scale x="10.975" y="0.00015" z="10.975"/>
+                    <scale x="10.975" y="0.00015" z="10.975" />
                 </transform>
                 <models>
-                    <model file="torus_1_0_50_10.3d"/>
+                    <model file="torus_1_0_50_10.3d" name="Anéis de Saturno">
+                        <texture file="Textures/saturnring.jpg" />
+                    </model>
                 </models>
             </group>
         </group>
@@ -243,7 +269,9 @@
                     <rotate time="0.0296" x="0" y="1" z="0" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Urano">
+                        <texture file="Textures/uranus.jpg" />
+                    </model>
                 </models>
             </group>
         </group>
@@ -269,7 +297,9 @@
                     <rotate time="0.0275" x="0" y="1" z="0" />
                 </transform>
                 <models>
-                    <model file="sphere_1_8_8.3d" />
+                    <model file="sphere_1_8_8.3d" name="Neptuno">
+                        <texture file="Textures/neptune.jpg" />
+                    </model>
                 </models>
             </group>
         </group>
@@ -292,7 +322,10 @@
                 <scale x="0.5" y="0.5" z="0.5" />
             </transform>
             <models>
-                <model file="sphere_1_10_10.3d" />
+                <model file="sphere_1_10_10.3d" name="Cometa Halley" />
+                <color>
+                    <emissive R="0" G="0" B="0" />
+                </color>
             </models>
         </group>
     </group>
