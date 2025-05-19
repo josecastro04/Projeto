@@ -6,11 +6,7 @@
         <up x="0" y="1" z="0" />
         <projection fov="60" near="1" far="1000" />
     </camera>
-    <background file="Textures/Space.jpg" />
-
-    <lights>
-        <light type="point" posx="0" posy="0" posz="0" />
-    </lights>
+    
 
     <group>
         <!-- Sol -->
@@ -23,9 +19,6 @@
                 <model file="sphere_1_30_30.3d" name="Sol">
                     <texture file="Textures/sun.jpg" />
                 </model>
-                <color>
-                    <emissive R="255" G="255" B="255" />
-                </color>
             </models>
         </group>
 
@@ -169,6 +162,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" name="Lua Io" />
+                    <texture file="Textures/moon.jpg" />
                 </models>
             </group>
 
@@ -181,6 +175,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" name="Lua Europa" />
+                    <texture file="Textures/moon.jpg" />
                 </models>
             </group>
 
@@ -193,6 +188,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" name="Lua Ganímedes" />
+                    <texture file="Textures/moon.jpg" />
                 </models>
             </group>
 
@@ -205,6 +201,7 @@
                 </transform>
                 <models>
                     <model file="sphere_1_8_8.3d" name="Lua Calisto">
+                        <texture file="Textures/moon.jpg" />
                     </model>
                 </models>
             </group>
@@ -323,9 +320,7 @@
             </transform>
             <models>
                 <model file="sphere_1_10_10.3d" name="Cometa Halley" />
-                <color>
-                    <emissive R="0" G="0" B="0" />
-                </color>
+                <texture file="Textures/moon.jpg" />
             </models>
         </group>
     </group>
